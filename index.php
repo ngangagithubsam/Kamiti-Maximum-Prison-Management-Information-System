@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureCell v3 - Prison Management System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;--bg4:#e8e8e8;
+    --border:#d4d4d4;--border2:#c0c0c0;--text:#1a1a1a;--text2:#555555;--text3:#888888;
+    --accent:#4f8ef7;--accent2:#2563d4;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;
+    --purple:#a78bfa;--teal:#14b8a6;--font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+    --r:6px;--r2:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;font-size:14px;}
+  #auth-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;}
+  .auth-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:40px;width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
+  .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+  .auth-logo-icon{width:36px;height:36px;background:var(--accent);border-radius:var(--r);display:flex;align-items:center;justify-content:center;}
+  .auth-logo-icon svg{width:20px;height:20px;fill:white;}
+  .auth-logo-text{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--text);}
+  .auth-logo-sub{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:var(--mono);}
+  .auth-title{font-size:22px;font-weight:600;margin-bottom:6px;}
+  .auth-sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
+  .form-group{margin-bottom:16px;}
+  .form-label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);}
+  .form-input,.form-select,.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:14px;font-family:var(--font);outline:none;transition:border-color .2s;}
+  .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);}
+  .form-select{appearance:none;cursor:pointer;}
+  .form-textarea{resize:vertical;min-height:80px;}
+  .photo-preview{width:100px;height:100px;object-fit:cover;border:1px solid var(--border2);border-radius:var(--r);margin-top:8px;display:none;background:var(--bg4);}
+  .photo-upload-box{display:flex;align-items:flex-start;gap:14px;}
+  .photo-input-wrap{flex:1;min-width:0;}
+  .photo-preview-box{width:110px;height:110px;border:1px solid var(--border2);background:var(--bg4);border-radius:var(--r);display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .photo-preview-box img{width:100%;height:100%;object-fit:cover;display:none;}
+  .photo-preview-box.placeholder::before{content:'No Photo';font-size:11px;color:var(--text3);font-family:var(--mono);letter-spacing:1px;text-transform:uppercase;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:1px solid transparent;border-radius:var(--r);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:white;border-color:var(--accent2);}
+  .btn-primary:hover{background:var(--accent2);}
+  .btn-secondary{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+  .btn-secondary:hover{background:var(--bg4);}
+  .btn-danger{background:#3f1515;color:var(--red);border-color:#7a2020;}
+  .btn-danger:hover{background:#5a1a1a;}
+  .btn-success{background:#0f3320;color:var(--green);border-color:#1a5a30;}
+  .btn-sm{padding:5px 12px;font-size:12px;}
+  .btn-full{width:100%;justify-content:center;}
+  #app{display:flex;height:100vh;overflow:hidden;}
+  #sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+  .sidebar-header{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .sidebar-logo{width:28px;height:28px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sidebar-logo svg{width:16px;height:16px;fill:white;}
+  .sidebar-title{font-family:var(--mono);font-size:13px;font-weight:600;}
+  .sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+  .nav-section{margin-bottom:20px;}
+  .nav-section-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;padding:4px 8px;margin-bottom:4px;font-family:var(--mono);}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;margin-bottom:2px;border:1px solid transparent;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bg4);color:var(--accent);border-color:var(--border2);}
+  .nav-item svg{width:15px;height:15px;flex-shrink:0;}
+  .nav-badge{margin-left:auto;background:var(--accent);color:white;font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--mono);}
+  .sidebar-footer{padding:12px;border-top:1px solid var(--border);}
+  .user-card{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent);font-family:var(--mono);flex-shrink:0;}
+  .user-name{font-size:13px;font-weight:500;}
+  .user-role{font-size:11px;color:var(--text3);}
+  .btn-logout{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;border-radius:4px;}
+  .btn-logout:hover{color:var(--red);}
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;flex-shrink:0;}
+  .topbar-title{font-size:16px;font-weight:600;}
+  .topbar-sub{font-size:12px;color:var(--text3);}
+  .topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  .content{flex:1;overflow-y:auto;padding:24px;}
+  .page{display:none;}
+  .page.active{display:block;}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;}
+  .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-family:var(--mono);}
+  .stat-value{font-size:28px;font-weight:600;font-family:var(--mono);}
+  .stat-sub{font-size:12px;color:var(--text2);margin-top:4px;}
+  .table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow-x:auto;overflow-y:hidden;}
+  .table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+  .table-title{font-size:14px;font-weight:600;}
+  .search-box{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:7px 12px;margin-left:auto;}
+  .search-box svg{width:14px;height:14px;color:var(--text3);flex-shrink:0;}
+  .search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:200px;font-family:var(--font);}
+  .filter-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
+  .filter-group label{font-size:12px;color:var(--text2);font-weight:500;}
+  .filter-group input[type="date"]{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--font);}
+  .filter-group{display:flex;align-items:center;gap:8px;margin-left:12px;}
+  .filter-group label{font-size:12px;color:var(--text2);font-weight:500;}
+  .filter-group input[type="date"]{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--font);}
+  .btn-export{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);cursor:pointer;font-size:12px;transition:all .2s;margin-left:4px;}
+  .btn-export:hover{background:var(--accent);color:white;border-color:var(--accent);}
+  table{width:100%;border-collapse:collapse;table-layout:fixed;}
+  th{padding:10px 16px;text-align:left;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);border-bottom:1px solid var(--border);background:var(--bg3);}
+  td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text2);}
+  .prisoner-table{min-width:930px;}
+  .prisoner-table col:nth-child(1){width:13%;}
+  .prisoner-table col:nth-child(2){width:17%;}
+  .prisoner-table col:nth-child(3){width:13%;}
+  .prisoner-table col:nth-child(4){width:13%;}
+  .prisoner-table col:nth-child(5){width:10%;}
+  .prisoner-table col:nth-child(6){width:11%;}
+  .prisoner-table col:nth-child(7){width:12%;}
+  .prisoner-table col:nth-child(8){width:21%;}
+  .prisoner-table th,.prisoner-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .prisoner-table th:last-child,.prisoner-table td:last-child{overflow:visible;}
+  .prisoner-table td:last-child{white-space:nowrap;}
+  .staff-table{min-width:1080px;}
+  .staff-table col:nth-child(1){width:12%;}
+  .staff-table col:nth-child(2){width:16%;}
+  .staff-table col:nth-child(3){width:16%;}
+  .staff-table col:nth-child(4){width:13%;}
+  .staff-table col:nth-child(5){width:11%;}
+  .staff-table col:nth-child(6){width:11%;}
+  .staff-table col:nth-child(7){width:15%;}
+  .staff-table col:nth-child(8){width:18%;}
+  .staff-table th,.staff-table td{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .staff-table th:last-child,.staff-table td:last-child{overflow:visible;}
+  .staff-table td:last-child{white-space:nowrap;}
+  .table-actions{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .table-actions .btn,.inventory-actions .btn{flex:0 0 auto;white-space:nowrap;}
+  .inventory-items-table{min-width:1180px;}
+  .inventory-items-table th:last-child,.inventory-items-table td:last-child{width:190px;min-width:190px;overflow:visible;white-space:nowrap;}
+  .inventory-actions{display:inline-flex;align-items:center;gap:4px;white-space:nowrap;}
+  .table-scroll{width:100%;overflow-x:auto;overflow-y:hidden;}
+  .shift-table,.rehab-program-table,.rehab-enrollment-table{min-width:980px;}
+  .shift-table col:nth-child(1){width:10%;}.shift-table col:nth-child(2){width:13%;}.shift-table col:nth-child(3){width:10%;}.shift-table col:nth-child(4){width:11%;}.shift-table col:nth-child(5){width:9%;}.shift-table col:nth-child(6){width:9%;}.shift-table col:nth-child(7){width:11%;}.shift-table col:nth-child(8){width:11%;}.shift-table col:nth-child(9){width:8%;}.shift-table col:nth-child(10){width:14%;}
+  .rehab-program-table col:nth-child(1){width:11%;}.rehab-program-table col:nth-child(2){width:15%;}.rehab-program-table col:nth-child(3){width:11%;}.rehab-program-table col:nth-child(4){width:14%;}.rehab-program-table col:nth-child(5){width:14%;}.rehab-program-table col:nth-child(6){width:8%;}.rehab-program-table col:nth-child(7){width:9%;}.rehab-program-table col:nth-child(8){width:8%;}.rehab-program-table col:nth-child(9){width:10%;}
+  .rehab-enrollment-table col:nth-child(1){width:12%;}.rehab-enrollment-table col:nth-child(2){width:18%;}.rehab-enrollment-table col:nth-child(3){width:18%;}.rehab-enrollment-table col:nth-child(4){width:13%;}.rehab-enrollment-table col:nth-child(5){width:14%;}.rehab-enrollment-table col:nth-child(6){width:10%;}.rehab-enrollment-table col:nth-child(7){width:15%;}
+  .shift-table th:last-child,.shift-table td:last-child,.rehab-program-table th:last-child,.rehab-program-table td:last-child,.rehab-enrollment-table th:last-child,.rehab-enrollment-table td:last-child{overflow:visible;white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--bg3);color:var(--text);}
+  .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--mono);}
+  .badge-green{background:#0f3320;color:var(--green);}
+  .badge-red{background:#3f1515;color:var(--red);}
+  .badge-amber{background:#3a2000;color:var(--amber);}
+  .badge-blue{background:#0a1f40;color:var(--accent);}
+  .badge-purple{background:#1a1030;color:var(--purple);}
+  .badge-gray{background:var(--bg4);color:var(--text2);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:500;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);width:640px;max-height:85vh;overflow-y:auto;padding:28px;position:relative;}
+  .modal-lg{width:800px;}
+  .modal-title{font-size:18px;font-weight:600;margin-bottom:6px;}
+  .modal-sub{font-size:13px;color:var(--text2);margin-bottom:24px;}
+  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;border-radius:4px;}
+  .modal-close:hover{color:var(--text);background:var(--bg3);}
+  .view-modal{width:min(920px,calc(100vw - 32px));max-height:90vh;padding:0;overflow:hidden;border-radius:12px;box-shadow:0 22px 54px rgba(0,0,0,0.24);}
+  .view-modal-header{padding:22px 60px 18px 28px;border-bottom:1px solid var(--border);background:transparent;}
+  .view-modal-kicker{display:none;}
+  .view-modal-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .view-modal h2{margin:0 0 4px;font-size:24px;line-height:1.2;color:var(--text);letter-spacing:-0.02em;font-weight:700;}
+  .view-modal .modal-subtitle{color:var(--accent);font:13px var(--mono);margin-top:6px;}
+  .view-modal-status{display:inline-flex;align-items:center;justify-content:center;min-height:24px;}
+  .view-modal>[id$="-view-content"]{padding:24px 28px 28px;overflow-y:auto;max-height:calc(90vh - 103px);}
+  .prisoner-profile-grid,.view-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px;}
+  .prisoner-profile-field{min-width:0;padding:13px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);}
+  .prisoner-profile-label{display:block;margin-bottom:6px;color:var(--text3);font:10px var(--mono);letter-spacing:.7px;text-transform:uppercase;}
+  .prisoner-profile-value{color:var(--text);font-size:13px;line-height:1.45;overflow-wrap:anywhere;}
+  .prisoner-profile-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+  .prisoner-profile-section-title{margin-bottom:12px;color:var(--accent);font:11px var(--mono);letter-spacing:1px;text-transform:uppercase;}
+  .prisoner-profile-related{padding:14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text2);font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .prisoner-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px;}
+  .prisoner-summary-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;min-height:78px;display:flex;flex-direction:column;justify-content:center;}
+  .prisoner-summary-label{display:block;margin-bottom:6px;color:var(--text3);font:10px var(--mono);letter-spacing:.7px;text-transform:uppercase;}
+  .prisoner-summary-value{font-size:13px;color:var(--text);font-weight:600;line-height:1.4;overflow-wrap:anywhere;}
+  .view-modal .badge{vertical-align:middle;}
+  @media (max-width:600px){.view-modal{width:calc(100vw - 20px);}.view-modal-header{padding:20px 52px 16px 20px;}.view-modal-title-row{flex-direction:column;align-items:flex-start;}.view-modal h2{font-size:18px;}.view-modal>[id$="-view-content"]{padding:18px 20px 22px;}.prisoner-profile-grid,.view-fields,.prisoner-summary-grid{grid-template-columns:1fr;gap:10px;}}
+  .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+  .section-divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+  .section-title-sm{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;font-family:var(--mono);}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+  .tab{padding:8px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab:hover:not(.active){color:var(--text);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .log-list{display:flex;flex-direction:column;gap:8px;}
+  .log-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;display:flex;gap:14px;align-items:flex-start;}
+  .log-icon{width:32px;height:32px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .log-text{flex:1;}
+  .log-title{font-size:13px;font-weight:500;color:var(--text);}
+  .log-meta{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);}
+  .log-time{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;}
+  .alert{padding:12px 16px;border-radius:var(--r);border:1px solid;margin-bottom:16px;font-size:13px;}
+  .alert-success{background:#0f3320;border-color:#1a5a30;color:var(--green);}
+  .alert-error{background:#3f1515;border-color:#7a2020;color:var(--red);}
+  .alert-info{background:#0a1f40;border-color:#1a3a70;color:var(--accent);}
+  .report-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:12px;}
+  .report-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .report-meta{font-size:12px;color:var(--text2);margin-bottom:12px;font-family:var(--mono);}
+  .report-body{font-size:13px;color:var(--text2);line-height:1.6;}
+  .empty-state{text-align:center;padding:60px 20px;}
+  .empty-state p{font-size:13px;color:var(--text2);}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .mb16{margin-bottom:16px;}
+  .mb24{margin-bottom:24px;}
+  .flex-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .text-mono{font-family:var(--mono);}
+  .text-accent{color:var(--accent);}
+  #notif{position:fixed;bottom:24px;right:24px;z-index:2000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 20px;font-size:13px;display:none;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+  #notif.show{display:flex;align-items:center;gap:10px;}
+  #notif.success{border-left:3px solid var(--green);}
+  #notif.error{border-left:3px solid var(--red);}
+  #notif.info{border-left:3px solid var(--accent);}
+
+  /* -- NEW v3 styles -- */
+  .stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+  .badge-teal{background:#031a18;color:var(--teal);}
+  .badge-orange{background:#3a1500;color:#fb923c;}
+  .nav-badge.warn{background:var(--amber);color:#000;}
+  .progress-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:3px;}
+  .progress-fill{height:100%;background:var(--accent);border-radius:3px;}
+  .stock-alert{background:#3a2000;border:1px solid #6a3800;border-radius:var(--r);padding:10px 16px;margin-bottom:16px;font-size:13px;color:var(--amber);display:flex;align-items:center;gap:8px;}
+  .btn-warning{background:#3a2000;color:var(--amber);border:1px solid #6a3800;}
+  .btn-warning:hover{background:#4a2a00;}
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:var(--bg2);}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  .password-field-wrapper{position:relative;display:flex;align-items:center;}
+  .password-field-wrapper .form-input{padding-right:40px;}
+  .password-toggle-btn{position:absolute;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;padding:6px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color .2s;}
+  .password-toggle-btn:hover{color:var(--text);}
+  .password-toggle-btn svg{width:18px;height:18px;}
+  .progress-shell{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:14px;}
+  .progress-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-bottom:12px;}
+  .progress-stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;min-width:0;}
+  .progress-stat-label{display:block;color:var(--text3);font:10px var(--mono);letter-spacing:.7px;text-transform:uppercase;margin-bottom:5px;}
+  .progress-stat-value{font:600 18px var(--mono);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .progress-overall{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r);margin-bottom:12px;}
+  .progress-overall .progress-bar{flex:1;margin:0;height:8px;}
+  .progress-history{display:flex;flex-direction:column;gap:8px;}
+  .progress-record{border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:var(--r);padding:12px;background:var(--bg);}
+  .progress-record-head,.progress-record-score,.progress-record-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .progress-record-score{justify-content:flex-start;margin:10px 0;color:var(--text2);font:12px var(--mono);}
+  .progress-score{font-size:18px;font-weight:600;color:var(--text);}
+  .progress-delta{font:600 12px var(--mono);}
+  .progress-delta.up{color:var(--green);}.progress-delta.down{color:var(--red);}.progress-delta.flat{color:var(--text3);}
+  .progress-record-notes{color:var(--text2);font-size:13px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;margin-top:6px;}
+  .progress-record-meta{color:var(--text3);font-size:11px;margin-top:10px;}
+  .progress-actions{display:flex;gap:6px;margin-top:10px;}
+  @media (max-width:600px){.progress-summary{grid-template-columns:repeat(2,minmax(0,1fr));}.progress-overall{align-items:flex-start;flex-wrap:wrap;}.progress-overall .progress-bar{flex-basis:100%;order:3;}}
+  .report-preview-overlay{align-items:flex-start;overflow:auto;padding:18px;}
+  .report-preview-modal{width:min(980px,100%);max-height:none;overflow:visible;padding:0;background:#dfe3e8;border:0;}
+  .report-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2;}
+  .report-toolbar-actions{display:flex;gap:8px;}
+  .report-document{width:210mm;max-width:100%;margin:0 auto;background:#fff;color:#182230;padding:16mm 16mm 20mm;box-shadow:0 2px 12px rgba(0,0,0,.16);font-family:Arial,sans-serif;line-height:1.4;position:relative;}
+  .report-header{border-bottom:3px solid #1f4e79;padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;gap:16px;align-items:flex-start;}
+  .report-brand{font-size:18px;font-weight:700;letter-spacing:.6px;color:#1f4e79;}.report-institution{font-size:10px;letter-spacing:1.2px;color:#526273;margin-top:2px;}.report-title{font-size:16px;font-weight:700;text-align:right;color:#182230;}.report-meta{font-size:10px;text-align:right;color:#526273;margin-top:4px;}
+  .report-identity{display:grid;grid-template-columns:1fr 34mm;gap:14px;margin-bottom:14px;align-items:start;}.report-photo{width:34mm;height:42mm;border:1px solid #9ca8b5;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;color:#687582;overflow:hidden;}.report-photo img{width:100%;height:100%;object-fit:contain;}.report-name{font-size:20px;font-weight:700;margin-bottom:8px;color:#182230;}.report-id{font:600 12px var(--mono);color:#1f4e79;}
+  .report-section{margin-top:14px;break-inside:avoid;}.report-section h3{font-size:11px;letter-spacing:1px;color:#1f4e79;border-bottom:1px solid #9ca8b5;padding-bottom:4px;margin:0 0 7px;text-transform:uppercase;}.report-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid #d6dce2;border-left:1px solid #d6dce2;}.report-field{padding:6px 8px;border-right:1px solid #d6dce2;border-bottom:1px solid #d6dce2;min-width:0;}.report-field-label{display:block;font-size:9px;text-transform:uppercase;color:#687582;letter-spacing:.5px;}.report-field-value{font-size:11px;overflow-wrap:anywhere;white-space:pre-wrap;}.report-notes{border:1px solid #d6dce2;padding:9px;font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;min-height:28px;}.report-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:9px;}.report-summary-card{border:1px solid #d6dce2;padding:7px;}.report-summary-card strong{display:block;font-size:15px;color:#1f4e79;}.report-summary-card span{font-size:8px;text-transform:uppercase;color:#687582;}.report-assessment{border:1px solid #d6dce2;padding:8px;margin:7px 0;break-inside:avoid;font-size:10px;}.report-assessment-head{display:flex;justify-content:space-between;gap:8px;font-weight:700;color:#1f4e79;}.report-assessment-scores{margin-top:4px;font-size:10px;}.report-assessment-text{margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere;}.report-footer{border-top:1px solid #9ca8b5;margin-top:18px;padding-top:6px;display:flex;justify-content:space-between;font-size:9px;color:#687582;}
+  #prisoner-report-print-root{display:none;}
+  @media print{body.printing-report> *{display:none!important;}body.printing-report>#prisoner-report-print-root{display:block!important;visibility:visible!important;position:static!important;background:#fff!important;overflow:visible!important;}body.printing-report>#prisoner-report-print-root .report-document{display:block!important;visibility:visible!important;position:static!important;background:#fff!important;overflow:visible!important;box-shadow:none;width:auto;max-width:none;margin:0;padding:0;}.report-toolbar{display:none!important;}.report-section,.report-assessment{break-inside:avoid;}@page{size:A4;margin:16mm;}}
+  @media (max-width:700px){.report-identity{grid-template-columns:1fr 100px;}.report-photo{width:100px;height:125px;}.report-summary{grid-template-columns:repeat(2,1fr);}.report-grid{grid-template-columns:1fr;}.report-header{flex-direction:column;}.report-title,.report-meta{text-align:left;}}
+</style>
+</head>
+<body>
+
+<div id="notif"><span id="notif-text"></span></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l6 2.67V11c0 3.91-2.56 7.56-6 8.86-3.44-1.3-6-4.95-6-8.86V7.67L12 5z"/></svg></div>
+      <div>
+        <div class="auth-logo-text">INMATE INFO PLUS</div>
+        <div class="auth-logo-sub">Kamiti Prison Mgt Sys</div>
+      </div>
+    </div>
+    <div class="auth-title">Authorized Access Only</div>
+    <div class="auth-sub">Enter your credentials to access the system</div>
+    <div id="auth-alert" style="display:none" class="alert alert-error mb16"></div>
+    <div class="form-group"><label class="form-label">Username</label><input type="text" id="login-user" class="form-input" placeholder="Enter username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="form-group"><label class="form-label">Password</label><div class="password-field-wrapper"><input type="password" id="login-pass" class="form-input" placeholder="Enter password" autocomplete="current-password" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()" title="Show/Hide password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+      Sign In
+    </button>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);text-align:center">Implementing Safety </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
+      <div><div class="sidebar-title">Inmate Info</div><div style="font-size:10px;color:var(--text3)">PMS </div></div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <div class="nav-item active" onclick="navigate('dashboard')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</div>
+        <div class="nav-item" onclick="navigate('prisoners')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Prisoners<span class="nav-badge" id="nav-prisoner-count">0</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Operations</div>
+        <div class="nav-item" onclick="navigate('visitations')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Visitations</div>
+        <div class="nav-item" onclick="navigate('incidents')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>Incidents</div>
+        <div class="nav-item" onclick="navigate('movements')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>Log In/Out</div>
+        <div class="nav-item" onclick="navigate('cells')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Cell Management</div>
+        <div class="nav-item" onclick="navigate('shifts')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>Shift Management</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Records</div>
+        <div class="nav-item" onclick="navigate('court')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l4 2.18V17h2v-4.82L9 13.4V17c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2v-3.6l2-1.09V11h2V9.18L12 3zm5 8.5l-5 2.73-5-2.73v-1.8L12 12.5l5-2.77v1.77z"/></svg>Court Cases</div>
+        <div class="nav-item" onclick="navigate('reports')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>Reports</div>
+        <div class="nav-item" onclick="navigate('medical')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>Medical Records</div>
+        <div class="nav-item" onclick="navigate('rehab')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>Rehabilitation<span class="nav-badge" id="nav-rehab-count">0</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Logistics</div>
+        <div class="nav-item" onclick="navigate('inventory')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>Inventory<span class="nav-badge warn" id="nav-stock-alert" style="display:none">!</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">System</div>
+        <div class="nav-item" onclick="navigate('staff')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Staff / Users</div>
+        <div class="nav-item" onclick="navigate('permissions')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 100 14 7 7 0 000-14zm0 2a5 5 0 110 10 5 5 0 010-10zM4 20c0-2.67 5.33-4 8-4s8 1.33 8 4v2H4v-2z"/></svg>Permissions</div>
+        <div class="nav-item" onclick="navigate('auditlog')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>Audit Log</div>
+        
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar-sidebar">AD</div>
+        <div><div class="user-name" id="user-name-sidebar">Admin</div><div class="user-role" id="user-role-sidebar">Administrator</div></div>
+        <button class="btn-logout" onclick="doLogout()" title="Logout"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div class="topbar">
+        <div><div class="topbar-title" id="page-title">Dashboard</div><div class="topbar-sub" id="page-sub">Overview of facility status</div></div>
+        <div style="margin-left:12px">
+          <select id="view-toggle" class="form-select" onchange="onViewToggleChange(event)"></select>
+        </div>
+        <div class="topbar-actions" id="topbar-actions"></div>
+      </div>
+    <div class="content">
+
+      <?php include __DIR__ . '/modules/dashboard.php'; ?>
+<?php include __DIR__ . '/modules/permissions.php'; ?>
+<?php include __DIR__ . '/modules/prisoners.php'; ?>
+<?php include __DIR__ . '/modules/visitations.php'; ?>
+<?php include __DIR__ . '/modules/incidents.php'; ?>
+<?php include __DIR__ . '/modules/movements.php'; ?>
+<?php include __DIR__ . '/modules/cells.php'; ?>
+<?php include __DIR__ . '/modules/court.php'; ?>
+<?php include __DIR__ . '/modules/reports.php'; ?>
+<?php include __DIR__ . '/modules/medical.php'; ?>
+<?php include __DIR__ . '/modules/shifts.php'; ?>
+<?php include __DIR__ . '/modules/rehab.php'; ?>
+<?php include __DIR__ . '/modules/inventory.php'; ?>
+<?php include __DIR__ . '/modules/staff.php'; ?>
+<?php include __DIR__ . '/modules/auditlog.php'; ?>
+<!-- PRISONER MODAL -->
+<div class="modal-overlay" id="modal-prisoner">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeModal('prisoner')">&#x2715;</button>
+    <div class="modal-title" id="prisoner-modal-title">Register New Prisoner</div>
+    <div class="modal-sub">Enter complete prisoner information below</div>
+    <div class="section-title-sm">Personal Information</div>
+    <div class="form-row-3">
+      <div class="form-group"><label class="form-label">First Name *</label><input type="text" class="form-input" id="p-firstname"></div>
+      <div class="form-group"><label class="form-label">Middle Name</label><input type="text" class="form-input" id="p-middlename"></div>
+      <div class="form-group"><label class="form-label">Last Name *</label><input type="text" class="form-input" id="p-lastname"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date of Birth</label><input type="date" class="form-input" id="p-dob"></div>
+      <div class="form-group"><label class="form-label">Gender</label><select class="form-select" id="p-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">National ID / Passport</label><input type="text" class="form-input" id="p-natid"></div>
+      <div class="form-group"><label class="form-label">Nationality</label><input type="text" class="form-input" id="p-nationality" value="Kenyan"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Address</label><input type="text" class="form-input" id="p-address"></div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Prisoner Photo</label>
+        <div class="photo-upload-box">
+          <div class="photo-input-wrap"><input type="file" class="form-input" id="p-photo" accept="image/*" onchange="previewPrisonerPhoto(this)"></div>
+          <div class="photo-preview-box placeholder" id="p-photo-preview-box"><img id="p-photo-preview" src="" alt="Photo preview"></div>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Case Number</label><input type="text" class="form-input" id="p-casenumber"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Emergency Contact Name</label><input type="text" class="form-input" id="p-emname"></div>
+      <div class="form-group"><label class="form-label">Emergency Contact Phone</label><input type="text" class="form-input" id="p-emphone"></div>
+    </div>
+    <hr class="section-divider">
+    <div class="section-title-sm">Incarceration Details</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Admission Date *</label><input type="date" class="form-input" id="p-admdate"></div>
+      <div class="form-group"><label class="form-label">Cell Assignment</label><select class="form-select" id="p-cell"></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Sentence (months)</label><input type="number" class="form-input" id="p-sentence" min="0"></div>
+      <div class="form-group"><label class="form-label">Expected Release Date</label><input type="date" class="form-input" id="p-release"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Primary Offense</label><input type="text" class="form-input" id="p-offense"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Security Level</label><select class="form-select" id="p-security"><option>Minimum</option><option>Medium</option><option>Maximum</option><option>Administrative</option></select></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="p-status"><option>Active</option><option>Released</option><option>Transferred</option><option>Deceased</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="p-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('prisoner')">Cancel</button><button class="btn btn-primary" onclick="savePrisoner()">Save Prisoner</button></div>
+  </div>
+</div>
+
+<!-- VISIT MODAL -->
+<div class="modal-overlay" id="modal-visit">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('visit')">&#x2715;</button>
+    <div class="modal-title" id="visit-modal-title">Schedule Visitation</div>
+    <div class="form-group"><label class="form-label">Prisoner *</label><select class="form-select" id="v-prisoner"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Visitor Name *</label><input type="text" class="form-input" id="v-visitorname"></div>
+      <div class="form-group"><label class="form-label">Relationship</label><select class="form-select" id="v-relationship"><option>Family</option><option>Lawyer</option><option>Friend</option><option>Other</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Visitor ID</label><input type="text" class="form-input" id="v-visitorid"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="text" class="form-input" id="v-phone"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date & Time *</label><input type="datetime-local" class="form-input" id="v-date"></div>
+      <div class="form-group"><label class="form-label">Duration (min)</label><input type="number" class="form-input" id="v-duration" value="30" min="15"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="v-type"><option>In-Person</option><option>Virtual</option><option>Legal</option></select></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="v-status"><option>Scheduled</option><option>Completed</option><option>Denied</option><option>Cancelled</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="v-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('visit')">Cancel</button><button class="btn btn-primary" onclick="saveVisitation()">Save Visit</button></div>
+  </div>
+</div>
+
+<!-- INCIDENT MODAL -->
+<div class="modal-overlay" id="modal-incident">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('incident')">&#x2715;</button>
+    <div class="modal-title" id="incident-modal-title">File Incident Report</div>
+    <div class="form-group"><label class="form-label">Prisoner *</label><select class="form-select" id="i-prisoner"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="i-type"><option>Assault</option><option>Contraband</option><option>Escape Attempt</option><option>Medical</option><option>Damage to Property</option><option>Other</option></select></div>
+      <div class="form-group"><label class="form-label">Severity</label><select class="form-select" id="i-severity"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Others Involved</label><input type="text" class="form-input" id="i-others"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Date & Time</label><input type="datetime-local" class="form-input" id="i-date"></div>
+      <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="i-location"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description *</label><textarea class="form-textarea" id="i-description"></textarea></div>
+    <div class="form-group"><label class="form-label">Action Taken</label><textarea class="form-textarea" id="i-action"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Reporting Officer</label><input type="text" class="form-input" id="i-officer"></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="i-status"><option>Reported</option><option>Under Review</option><option>Investigation</option><option>Action Taken</option><option>Resolved</option><option>Closed</option></select></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('incident')">Cancel</button><button class="btn btn-primary" onclick="saveIncident()">Save Incident</button></div>
+  </div>
+</div>
+
+<!-- MOVEMENT MODAL -->
+<div class="modal-overlay" id="modal-movement">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('movement')">&#x2715;</button>
+    <div class="modal-title" id="movement-modal-title">Log Movement</div>
+    <div class="form-group"><label class="form-label">Prisoner *</label><select class="form-select" id="m-prisoner"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="m-type"><option>Check-In</option><option>Check-Out</option><option>Court Appearance</option><option>Medical</option><option>Transfer</option><option>Other</option></select></div>
+      <div class="form-group"><label class="form-label">Location</label><input type="text" class="form-input" id="m-location"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Reason</label><input type="text" class="form-input" id="m-reason"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Authorized Officer</label><input type="text" class="form-input" id="m-officer"></div>
+      <div class="form-group"><label class="form-label">Date & Time</label><input type="datetime-local" class="form-input" id="m-date"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="m-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('movement')">Cancel</button><button class="btn btn-primary" onclick="saveMovement()">Log Movement</button></div>
+  </div>
+</div>
+
+<!-- CELL MODAL -->
+<div class="modal-overlay" id="modal-cell">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('cell')">&#x2715;</button>
+    <div class="modal-title" id="cell-modal-title">Add Cell</div>
+    <div class="form-group"><label class="form-label">Cell Number *</label><input type="text" class="form-input" id="c-cellnumber" placeholder="e.g., A-01"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Block *</label><input type="text" class="form-input" id="c-block" placeholder="e.g., Block A"></div>
+      <div class="form-group"><label class="form-label">Capacity *</label><input type="number" class="form-input" id="c-capacity" min="1" value="2"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="c-status"><option>Available</option><option>Occupied</option><option>Under Maintenance</option><option>Closed</option></select></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('cell')">Cancel</button><button class="btn btn-primary" onclick="saveCell()">Save Cell</button></div>
+  </div>
+</div>
+
+<!-- COURT MODAL -->
+<div class="modal-overlay" id="modal-court">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeModal('court')">&#x2715;</button>
+    <div class="modal-title" id="court-modal-title">Add Court Case</div>
+    <div class="form-group"><label class="form-label">Prisoner *</label><select class="form-select" id="c-prisoner"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Case Number *</label><input type="text" class="form-input" id="c-casenumber"></div>
+      <div class="form-group"><label class="form-label">Court Name</label><input type="text" class="form-input" id="c-court"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Charges</label><input type="text" class="form-input" id="c-charges"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Judge</label><input type="text" class="form-input" id="c-judge"></div>
+      <div class="form-group"><label class="form-label">Prosecutor</label><input type="text" class="form-input" id="c-prosecutor"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Defense Attorney</label><input type="text" class="form-input" id="c-defense"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Filing Date</label><input type="date" class="form-input" id="c-filingdate"></div>
+      <div class="form-group"><label class="form-label">Next Hearing Date</label><input type="date" class="form-input" id="c-hearingdate"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Verdict</label><select class="form-select" id="c-verdict"><option value="">Pending</option><option>Guilty</option><option>Not Guilty</option><option>Dismissed</option><option>Plea Deal</option></select></div>
+      <div class="form-group"><label class="form-label">Sentence Imposed</label><input type="text" class="form-input" id="c-sentence"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="c-status"><option>Active</option><option>Awaiting Hearing</option><option>Appealing</option><option>Closed</option></select></div>
+      <div class="form-group"><label class="form-label">Fine / Bail (KSH)</label><input type="number" class="form-input" id="c-fine"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="c-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('court')">Cancel</button><button class="btn btn-primary" onclick="saveCourt()">Save Case</button></div>
+  </div>
+</div>
+
+<!-- REPORT MODAL -->
+<div class="modal-overlay" id="modal-report">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('report')">&#x2715;</button>
+    <div class="modal-title">Generate Report</div>
+    <div class="form-group"><label class="form-label">Title *</label><input type="text" class="form-input" id="r-title"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="r-type"><option>General</option><option>Incident Summary</option><option>Prisoner Status</option><option>Visitation Summary</option><option>Medical</option><option>Security</option></select></div>
+      <div class="form-group"><label class="form-label">Prisoner (if specific)</label><select class="form-select" id="r-prisoner"><option value="">-- General --</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Body *</label><textarea class="form-textarea" id="r-body" style="min-height:120px"></textarea></div>
+    <div class="form-group"><label class="form-label">Prepared By</label><input type="text" class="form-input" id="r-author"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('report')">Cancel</button><button class="btn btn-primary" onclick="saveReport()">Submit Report</button></div>
+  </div>
+</div>
+
+<!-- MEDICAL MODAL -->
+<div class="modal-overlay" id="modal-medical">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('medical')">&#x2715;</button>
+    <div class="modal-title" id="medical-modal-title">Add Medical Record</div>
+    <div class="form-group"><label class="form-label">Prisoner *</label><select class="form-select" id="med-prisoner"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Condition / Diagnosis *</label><input type="text" class="form-input" id="med-condition"></div>
+      <div class="form-group"><label class="form-label">Treatment</label><input type="text" class="form-input" id="med-treatment"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Doctor</label><input type="text" class="form-input" id="med-doctor"></div>
+      <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="med-date"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="med-status"><option>Ongoing</option><option>Resolved</option><option>Referred</option><option>Critical</option></select></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="med-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('medical')">Cancel</button><button class="btn btn-primary" onclick="saveMedical()">Save Record</button></div>
+  </div>
+</div>
+
+<!-- STAFF MODAL -->
+<div class="modal-overlay" id="modal-staff">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('staff')">&#x2715;</button>
+    <div class="modal-title" id="staff-modal-title">Add Staff Member</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">First Name *</label><input type="text" class="form-input" id="st-firstname"></div>
+      <div class="form-group"><label class="form-label">Last Name</label><input type="text" class="form-input" id="st-lastname"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Role</label><select class="form-select" id="st-role"><option>Admin</option><option>Warden</option><option>Officer</option><option>Medical</option><option>Clerk</option></select></div>
+      <div class="form-group"><label class="form-label">Department</label><input type="text" class="form-input" id="st-dept"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Badge Number</label><input type="text" class="form-input" id="st-badge"></div>
+      <div class="form-group"><label class="form-label">Username *</label><input type="text" class="form-input" id="st-username"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Password (leave blank to keep existing)</label><input type="password" class="form-input" id="st-password"></div>
+    <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="st-status"><option>Active</option><option>Inactive</option><option>Suspended</option></select></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('staff')">Cancel</button><button class="btn btn-primary" onclick="saveStaff()">Save Staff</button></div>
+  </div>
+</div>
+
+<!-- SHIFT MODAL -->
+<div class="modal-overlay" id="modal-shift">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('shift')">&#x2715;</button>
+    <div class="modal-title" id="shift-modal-title">Schedule Shift</div>
+    <div class="modal-sub">Assign a staff member to a duty shift</div>
+    <div class="form-group"><label class="form-label">Staff Member *</label><select class="form-select" id="sh-staff"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Shift Type *</label><select class="form-select" id="sh-type"><option>Morning</option><option>Afternoon</option><option>Night</option><option>Emergency</option></select></div>
+      <div class="form-group"><label class="form-label">Shift Date *</label><input type="date" class="form-input" id="sh-date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Start Time *</label><input type="time" class="form-input" id="sh-start"></div>
+      <div class="form-group"><label class="form-label">End Time *</label><input type="time" class="form-input" id="sh-end"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Post / Location</label><input type="text" class="form-input" id="sh-location" placeholder="e.g. Block A, Main Gate"></div>
+      <div class="form-group"><label class="form-label">Supervisor</label><input type="text" class="form-input" id="sh-supervisor"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="sh-status"><option>Scheduled</option><option>Active</option><option>Completed</option><option>Absent</option><option>Swapped</option></select></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="sh-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('shift')">Cancel</button><button class="btn btn-primary" onclick="saveShift()">Save Shift</button></div>
+  </div>
+</div>
+
+<!-- SHIFT SWAP MODAL -->
+<div class="modal-overlay" id="modal-swap">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('swap')">&#x2715;</button>
+    <div class="modal-title">Request Shift Swap</div>
+    <div class="form-group"><label class="form-label">Original Shift ID (number)</label><input type="number" class="form-input" id="sw-shift" min="1"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Requested By *</label><input type="text" class="form-input" id="sw-by"></div>
+      <div class="form-group"><label class="form-label">Swap With *</label><input type="text" class="form-input" id="sw-with"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="sw-reason"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="sw-status"><option>Pending</option><option>Approved</option><option>Rejected</option></select></div>
+      <div class="form-group"><label class="form-label">Approved By</label><input type="text" class="form-input" id="sw-approved"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('swap')">Cancel</button><button class="btn btn-primary" onclick="saveSwap()">Submit Request</button></div>
+  </div>
+</div>
+
+<!-- INVENTORY ITEM MODAL -->
+<div class="modal-overlay" id="modal-inv_item">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeModal('inv_item')">&#x2715;</button>
+    <div class="modal-title" id="inv-item-modal-title">Add Inventory Item</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Item Name *</label><input type="text" class="form-input" id="ii-name"></div>
+      <div class="form-group"><label class="form-label">Category *</label><select class="form-select" id="ii-category"><option>Security</option><option>Medical</option><option>Food</option><option>Uniform</option><option>Cleaning</option><option>Office</option><option>Equipment</option><option>Other</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="ii-description" style="min-height:60px"></textarea></div>
+    <div class="form-row-3">
+      <div class="form-group"><label class="form-label">Unit</label><select class="form-select" id="ii-unit"><option>pcs</option><option>kg</option><option>litres</option><option>bags</option><option>boxes</option><option>sets</option><option>drums</option><option>tabs</option><option>rolls</option></select></div>
+      <div class="form-group"><label class="form-label">Current Quantity *</label><input type="number" class="form-input" id="ii-quantity" min="0" value="0"></div>
+      <div class="form-group"><label class="form-label">Unit Cost (KSH)</label><input type="number" class="form-input" id="ii-unitcost" min="0" value="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Min Quantity (reorder point)</label><input type="number" class="form-input" id="ii-minqty" min="0" value="5"></div>
+      <div class="form-group"><label class="form-label">Max Quantity</label><input type="number" class="form-input" id="ii-maxqty" min="0" value="100"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Supplier</label><input type="text" class="form-input" id="ii-supplier"></div>
+      <div class="form-group"><label class="form-label">Storage Location</label><input type="text" class="form-input" id="ii-location"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Last Restocked</label><input type="date" class="form-input" id="ii-restocked"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('inv_item')">Cancel</button><button class="btn btn-primary" onclick="saveInventoryItem()">Save Item</button></div>
+  </div>
+</div>
+
+<!-- INVENTORY TRANSACTION MODAL -->
+<div class="modal-overlay" id="modal-inv_txn">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('inv_txn')">&#x2715;</button>
+    <div class="modal-title">Record Transaction</div>
+    <div class="modal-sub">Issue, restock, or log inventory movement</div>
+    <div class="form-group"><label class="form-label">Item *</label><select class="form-select" id="txn-item"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Transaction Type *</label><select class="form-select" id="txn-type"><option>Issue</option><option>Return</option><option>Restock</option><option>Damaged</option><option>Disposed</option><option>Transfer</option></select></div>
+      <div class="form-group"><label class="form-label">Quantity *</label><input type="number" class="form-input" id="txn-qty" min="1" value="1"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Issued To / Received From</label><input type="text" class="form-input" id="txn-issuedto"></div>
+      <div class="form-group"><label class="form-label">Purpose</label><input type="text" class="form-input" id="txn-purpose"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Authorized By</label><input type="text" class="form-input" id="txn-auth"></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="txn-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('inv_txn')">Cancel</button><button class="btn btn-primary" onclick="saveTransaction()">Record</button></div>
+  </div>
+</div>
+
+<!-- REHAB PROGRAM MODAL -->
+<div class="modal-overlay" id="modal-rehab_prog">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeModal('rehab_prog')">&#x2715;</button>
+    <div class="modal-title" id="rehab-prog-modal-title">Add Rehabilitation Program</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Program Name *</label><input type="text" class="form-input" id="rp-name"></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="rp-type"><option>Education</option><option>Vocational</option><option>Counseling</option><option>Drug Rehab</option><option>Religious</option><option>Sports</option><option>Other</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-textarea" id="rp-description" style="min-height:60px"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Facilitator / Instructor</label><input type="text" class="form-input" id="rp-facilitator"></div>
+      <div class="form-group"><label class="form-label">Schedule</label><input type="text" class="form-input" id="rp-schedule" placeholder="e.g. Mon/Wed 09:00-11:00"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Venue</label><input type="text" class="form-input" id="rp-venue"></div>
+      <div class="form-group"><label class="form-label">Max Capacity</label><input type="number" class="form-input" id="rp-capacity" min="1" value="20"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="rp-start"></div>
+      <div class="form-group"><label class="form-label">End Date</label><input type="date" class="form-input" id="rp-end"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="rp-status"><option>Active</option><option>Upcoming</option><option>Completed</option><option>Suspended</option></select></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('rehab_prog')">Cancel</button><button class="btn btn-primary" onclick="saveRehabProgram()">Save Program</button></div>
+  </div>
+</div>
+
+<!-- ENROLLMENT MODAL -->
+<div class="modal-overlay" id="modal-enrollment">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('enrollment')">&#x2715;</button>
+    <div class="modal-title" id="enroll-modal-title">Enroll Prisoner in Program</div>
+    <div class="form-group"><label class="form-label">Program *</label><select class="form-select" id="en-program"></select></div>
+    <div class="form-group"><label class="form-label">Prisoner *</label><select class="form-select" id="en-prisoner"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Enroll Date</label><input type="date" class="form-input" id="en-date"></div>
+      <div class="form-group"><label class="form-label">Expected Completion</label><input type="date" class="form-input" id="en-completion"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Progress (0-100%)</label><input type="number" class="form-input" id="en-progress" min="0" max="100" value="0"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Grade</label><input type="text" class="form-input" id="en-grade" placeholder="A, B, C..."></div>
+      <div class="form-group"><label class="form-label">Status</label><select class="form-select" id="en-status"><option>Active</option><option>Completed</option><option>Dropped</option><option>Suspended</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="en-notes"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('enrollment')">Cancel</button><button class="btn btn-primary" onclick="saveEnrollment()">Save Enrollment</button></div>
+  </div>
+</div>
+
+
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Confirm Delete</div>
+    <div style="margin:16px 0;color:var(--text2);font-size:13px" id="confirm-msg"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('confirm')">Cancel</button><button class="btn btn-danger" id="confirm-ok-btn">Delete</button></div>
+  </div>
+</div>
+
+<!-- PRISONER PROGRESS MODAL -->
+<div class="modal-overlay" id="modal-progress">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeProgressModal()">&#x2715;</button>
+    <div class="modal-title" id="progress-modal-title">New Progress Assessment</div>
+    <div class="modal-sub" id="progress-prisoner-label"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Assessment Date *</label><input type="date" class="form-input" id="progress-date" required></div>
+      <div class="form-group"><label class="form-label">Category *</label><select class="form-select" id="progress-category" onchange="setProgressPreviousScore()"><option value="">Select assessment type</option><option>Behaviour</option><option>Education</option><option>Vocational</option><option>Rehabilitation</option><option>Counselling</option><option>Achievement</option><option>Disciplinary</option></select></div>
+    </div>
+    <div class="form-group"><label class="form-label">Assessment / Activity *</label><input type="text" class="form-input" id="progress-activity" maxlength="200" required></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Previous Score (0-100)</label><input type="number" class="form-input" id="progress-previous" min="0" max="100" step="0.01"></div>
+      <div class="form-group"><label class="form-label">Current Score (0-100) *</label><input type="number" class="form-input" id="progress-current" min="0" max="100" step="0.01" oninput="updateProgressChange()" required></div>
+    </div>
+    <div class="form-group"><label class="form-label">Improvement</label><input type="text" class="form-input" id="progress-change" maxlength="255" readonly></div>
+    <div class="form-group"><label class="form-label">Comments</label><textarea class="form-textarea" id="progress-comments"></textarea></div>
+    <div class="form-group"><label class="form-label">Recommendations</label><textarea class="form-textarea" id="progress-recommendations"></textarea></div>
+    <div class="form-group"><label class="form-label">Next Review Date</label><input type="date" class="form-input" id="progress-next-review"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeProgressModal()">Cancel</button><button class="btn btn-primary" onclick="saveProgressRecord()">Save Assessment</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-progress-view">
+  <div class="modal view-modal" role="dialog" aria-modal="true">
+    <button class="modal-close" type="button" onclick="closeProgressView()" aria-label="Close">&#x2715;</button>
+    <div class="view-modal-header"><div class="view-modal-title-row"><h2 id="progress-view-title">Progress Assessment</h2><span id="progress-view-status" class="view-modal-status"></span></div><div id="progress-view-subtitle" class="modal-subtitle"></div></div>
+    <div id="progress-view-content"></div>
+  </div>
+</div>
+<div class="modal-overlay report-preview-overlay" id="modal-prisoner-report" aria-hidden="true">
+  <div class="report-preview-modal" role="dialog" aria-modal="true">
+    <div class="report-toolbar"><strong>Individual Prisoner Report</strong><div class="report-toolbar-actions"><button class="btn btn-secondary btn-sm" type="button" onclick="closePrisonerReport()">Back</button><button class="btn btn-primary btn-sm" type="button" onclick="printPrisonerReport()">Print / Export PDF</button></div></div>
+    <div id="prisoner-report-content"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG - change this path if your folder name differs
+// ============================================================
+const API_BASE = 'api/data.php';
+const AUTH_API = 'api/auth.php';
+let csrfTokenValue = '';
+
+// ============================================================
+// API HELPERS
+// ============================================================
+async function apiCall(url, body = null) {
+  const opts = { credentials: 'same-origin', cache: 'no-store', headers: { 'Content-Type': 'application/json' } };
+  if (body) {
+    opts.method = 'POST';
+    const payload = { ...body };
+    if (currentUser && !payload.csrf_token && !url.includes('auth.php')) {
+      if (!csrfTokenValue) {
+        const tokenRes = await fetch('api/csrf.php', { credentials: 'same-origin' });
+        const tokenJson = await tokenRes.json();
+        if (!tokenJson.success) throw new Error(tokenJson.msg || 'Unable to obtain security token');
+        csrfTokenValue = tokenJson.data.csrf_token;
+      }
+      payload.csrf_token = csrfTokenValue;
+    }
+    opts.body = JSON.stringify(payload);
+  }
+  else opts.method = 'GET';
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+async function dbGetAll(store) {
+  const res = await apiCall(`${API_BASE}?action=get&store=${store}`);
+  return res.success ? res.data : [];
+}
+
+async function dbPut(store, record) {
+  const res = await apiCall(API_BASE, { action: 'save', store, record });
+  if (!res.success) throw new Error(res.msg);
+  return res.data?.id;
+}
+
+async function dbDelete(store, id) {
+  const res = await apiCall(API_BASE, { action: 'delete', store, id });
+  if (!res.success) throw new Error(res.msg);
+}
+
+async function getStats() {
+  const res = await apiCall(`${API_BASE}?action=stats&_=${Date.now()}`);
+  return res.success ? res.data : {};
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser = null;
+let editingId = {};
+let progressState = { mode: 'create', prisonerId: null, assessmentId: null, currentAssessment: null };
+let _cachedData = {};   // in-memory cache per navigation
+let realtimeRefreshTimer = null;
+let realtimeRefreshInFlight = false;
+
+const pages = {
+  'dashboard':  { title: 'Dashboard',        sub: 'Overview of facility status' },
+  'prisoners':  { title: 'Prisoner Registry', sub: 'Manage all prisoner records' },
+  'visitations':{ title: 'Visitations',       sub: 'Schedule and track visitor access' },
+  'incidents':  { title: 'Incident Reports',  sub: 'File and manage incident records' },
+  'movements':  { title: 'Movement Log',      sub: 'Track prisoner check-ins and check-outs' },
+  'cells':      { title: 'Cell Management',   sub: 'Monitor cell block occupancy' },
+  'court':      { title: 'Court Cases',       sub: 'Manage court case records and hearings' },
+  'reports':    { title: 'Reports',           sub: 'Generate and view official reports' },
+  'medical':    { title: 'Medical Records',   sub: 'Track prisoner health records' },
+  'staff':      { title: 'Staff & Users',     sub: 'Manage system users and access' },
+  'auditlog':   { title: 'Audit Log',         sub: 'System activity and security trail' },
+  'permissions':{ title: 'Permissions',       sub: 'Manage role-based access control' },
+  'shifts':     { title: 'Shift Management',  sub: 'Schedule and track staff duty shifts' },
+  'rehab':      { title: 'Rehabilitation',    sub: 'Manage rehabilitation programs and enrollments' },
+  'inventory':  { title: 'Inventory',         sub: 'Track facility stock and equipment' },
+};
+const topbarBtns = {
+  'prisoners':   `<button class="btn btn-primary btn-sm" onclick="openModal('prisoner')">&#x002B; Add Prisoner</button>`,
+  'visitations': `<button class="btn btn-primary btn-sm" onclick="openModal('visit')">&#x002B; Schedule Visit</button>`,
+  'incidents':   `<button class="btn btn-primary btn-sm" onclick="openModal('incident')">&#x002B; File Incident</button>`,
+  'movements':   `<button class="btn btn-primary btn-sm" onclick="openModal('movement')">&#x002B; Log Movement</button>`,
+  'cells':       `<button class="btn btn-primary btn-sm" onclick="openModal('cell')">&#x002B; Add Cell</button>`,
+  'court':       `<button class="btn btn-primary btn-sm" onclick="openModal('court')">&#x002B; Add Case</button>`,
+  'reports':     `<button class="btn btn-primary btn-sm" onclick="openModal('report')">&#x002B; New Report</button>`,
+  'medical':     `<button class="btn btn-primary btn-sm" onclick="openModal('medical')">&#x002B; Add Record</button>`,
+  'staff':       `<button class="btn btn-primary btn-sm" onclick="openModal('staff')">&#x002B; Add Staff</button>`,
+  'shifts':      `<button class="btn btn-primary btn-sm" onclick="openModal('shift')">&#x002B; Schedule Shift</button>`,
+  'rehab':       `<button class="btn btn-primary btn-sm" onclick="openModal('rehab_prog')">&#x002B; Add Program</button><button class="btn btn-secondary btn-sm" onclick="openModal('enrollment')">&#x002B; Enroll Prisoner</button>`,
+  'inventory':   `<button class="btn btn-primary btn-sm" onclick="openModal('inv_item')">&#x002B; Add Item</button><button class="btn btn-secondary btn-sm" onclick="openModal('inv_txn')">&#x002B; Transaction</button>`,
+};
+
+function getFilteredData(data, dateField) {
+  const fromDate = document.getElementById(dateField + '-from-date')?.value;
+  const toDate = document.getElementById(dateField + '-to-date')?.value;
+  if (!fromDate && !toDate) return data;
+  return data.filter(item => {
+    let itemDate = null;
+    if (item.visitDate) itemDate = item.visitDate;
+    else if (item.admdate) itemDate = item.admdate;
+    else if (item.incidentDate) itemDate = item.incidentDate;
+    else if (item.medDate) itemDate = item.medDate;
+    else if (item.moveDate) itemDate = item.moveDate;
+    else if (item.shiftDate) itemDate = item.shiftDate;
+    if (!itemDate) return true;
+    const date = new Date(itemDate);
+    const from = fromDate ? new Date(fromDate) : new Date('1900-01-01');
+    const to = toDate ? new Date(toDate) : new Date('2099-12-31');
+    return date >= from && date <= to;
+  });
+}
+
+function exportToCSV(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  const csv = [headers.join(','), ...data.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""') }"`).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click(); window.URL.revokeObjectURL(url);
+  showNotif('CSV exported successfully', 'success');
+}
+
+function exportToExcel(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  let html = '<table border="1"><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  data.forEach(row => { html += '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>'; });
+  html += '</table>';
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); window.URL.revokeObjectURL(url);
+  showNotif('Excel exported successfully', 'success');
+}
+
+function exportToPDF(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  let html = `<html><head><style>body{font-family:Arial;margin:10px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background-color:#f2f2f2;font-weight:bold;}</style></head><body><table><tr>` + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  data.forEach(row => { html += '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>'; });
+  html += '</table></body></html>';
+  const newWindow = window.open(); newWindow.document.write(html); newWindow.document.close(); setTimeout(() => newWindow.print(), 250);
+  showNotif('PDF ready to print', 'success');
+}
+
+function exportToWord(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  let html = '<table border="1"><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  data.forEach(row => { html += '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>'; });
+  html += '</table>';
+  const blob = new Blob([`<html><body>${html}</body></html>`], { type: 'application/msword' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); window.URL.revokeObjectURL(url);
+  showNotif('Word document exported', 'success');
+}
+
+async function exportData(store, format) {
+  const data = await dbGetAll(store);
+  const filtered = getFilteredData(data, store);
+  const datePart = new Date().toISOString().split('T')[0];
+  if (format === 'csv') return exportToCSV(filtered, `${store}_${datePart}.csv`);
+  if (format === 'excel') return exportToExcel(filtered, `${store}_${datePart}.xls`);
+  if (format === 'pdf') return exportToPDF(filtered, `${store}_${datePart}.pdf`);
+  if (format === 'word') return exportToWord(filtered, `${store}_${datePart}.doc`);
+  showNotif('Unknown export format', 'error');
+}
+
+
+
+
+
+function getRoleCategory() {
+  const role = (currentUser?.role || '').toLowerCase();
+  if (role.includes('system') || role.includes('administrator') || role === 'admin') {
+    return 'admin';
+  }
+  if (['warden', 'officer', 'medical', 'clerk', 'user', 'staff'].includes(role)) {
+    return 'user';
+  }
+  return 'other';
+}
+
+function getAllowedPages() {
+  const role = getRoleCategory();
+  const permissions = {
+    admin: ['dashboard','prisoners','visitations','incidents','movements','cells','shifts','court','reports','medical','rehab','inventory','staff','permissions','auditlog'],
+    user: ['dashboard','prisoners','visitations','incidents','movements','cells','shifts','court','reports','medical','rehab','inventory'],
+    other: ['dashboard','prisoners','visitations','reports'],
+  };
+  return permissions[role] || [];
+}
+
+function getNavPage(el) {
+  const onclick = el.getAttribute('onclick') || '';
+  if (onclick.includes("navigate('")) {
+    const match = onclick.match(/navigate\('([^']+)'/);
+    return match ? match[1] : '';
+  }
+  
+  return '';
+}
+
+function applyRoleMenuFiltering() {
+  const allowedPages = getAllowedPages();
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const page = getNavPage(el);
+    if (!page) return;
+    el.style.display = allowedPages.includes(page) ? 'flex' : 'none';
+  });
+}
+
+function isPageAllowed(page) {
+  return getAllowedPages().includes(page);
+}
+
+function isAdmin() {
+  return getRoleCategory() === 'admin';
+}
+
+// Render a compact view selector in the topbar listing allowed pages
+function renderViewToggle() {
+  const sel = document.getElementById('view-toggle');
+  if (!sel) return;
+  const pages = getAllowedPages();
+  sel.innerHTML = pages.map(p => `<option value="${p}">${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('');
+  sel.value = document.getElementById('page-title').textContent.toLowerCase() || 'dashboard';
+}
+
+function onViewToggleChange(e) {
+  const val = e.target.value;
+  if (val) navigate(val);
+}
+
+function toggleACLEditor() {
+  const section = document.getElementById('acl-editor-section');
+  if (section) section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+async function renderPermissions() {
+  if (!isAdmin()) return showNotif('Only administrators can manage permissions','error');
+  try {
+    const res = await fetch('./api/acl.php');
+    const json = await res.json();
+    if (!json.success) return showNotif(json.msg || 'Failed to load ACL','error');
+    const acl = json.data || {};
+    document.getElementById('acl-editor').value = JSON.stringify(acl, null, 2);
+    
+    // Render role permission cards
+    const rolesDiv = document.getElementById('permissions-roles-list');
+    const roles = Object.keys(acl).sort();
+    rolesDiv.innerHTML = roles.map(role => `
+      <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r2);padding:16px;margin-bottom:16px;">
+        <div style="font-weight:600;margin-bottom:12px;color:var(--accent);">${role}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          ${permissionStores.map(store => `
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px;">
+              <div style="font-size:12px;font-weight:600;margin-bottom:8px;color:var(--text2);">${store}</div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                ${permissionActions.map(action => `
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
+                    <input type="checkbox" class="perm-toggle" data-role="${role}" data-store="${store}" data-action="${action}" onchange="updatePermissionUI('${role}')" ${(acl[role]?.[store]?.[action] === true) ? 'checked' : ''}>
+                    ${action.charAt(0).toUpperCase() + action.slice(1)}
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px;">
+          <button class="btn btn-sm btn-success" onclick="saveRolePermissions('${role}')">Save ${role}</button>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    showNotif('Failed to load ACL: ' + e.message, 'error');
+  }
+}
+
+function updatePermissionUI(role) {
+  // UI feedback when user toggles checkboxes
+}
+
+async function saveRolePermissions(role) {
+  if (!isAdmin()) return showNotif('Only administrators can save permissions','error');
+  try {
+    // Get current ACL
+    const res = await fetch('./api/acl.php');
+    const json = await res.json();
+    const acl = json.data || {};
+    
+    // Update this role's permissions from checkboxes
+    const checkboxes = document.querySelectorAll(`.perm-toggle[data-role="${role}"]`);
+    if (!acl[role]) acl[role] = {};
+    checkboxes.forEach(cb => {
+      const store = cb.getAttribute('data-store');
+      const action = cb.getAttribute('data-action');
+      if (!acl[role][store]) acl[role][store] = {};
+      acl[role][store][action] = cb.checked;
+    });
+    
+    // Save updated ACL
+    const saveJson = await apiCall('./api/acl.php', acl);
+    if (!saveJson.success) return showNotif(saveJson.msg || 'Failed to save','error');
+    showNotif(`${role} permissions saved`, 'success');
+    applyRoleMenuFiltering(); renderViewToggle();
+  } catch (e) {
+    showNotif('Failed to save permissions: ' + e.message, 'error');
+  }
+}
+
+async function savePermissions() {
+  if (!isAdmin()) return showNotif('Only administrators can save permissions','error');
+  try {
+    const payload = JSON.parse(document.getElementById('acl-editor').value || '{}');
+    const json = await apiCall('./api/acl.php', payload);
+    if (!json.success) return showNotif(json.msg || 'Failed to save ACL','error');
+    showNotif('Permissions saved', 'success');
+    renderPermissions();
+    applyRoleMenuFiltering(); renderViewToggle();
+  } catch (e) {
+    showNotif('Failed to save ACL: ' + e.message, 'error');
+  }
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!username || !password) return showAlert('Please enter credentials');
+
+  try {
+    const res = await apiCall(AUTH_API, { action: 'login', username, password });
+    if (!res) {
+      console.error('Login API returned null/undefined response');
+      return showAlert('Server error: No response from authentication service');
+    }
+    if (res.success) {
+      csrfTokenValue = '';
+      currentUser = res.data;
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      const initials = (currentUser.name || 'AD').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      document.getElementById('user-avatar-sidebar').textContent = initials;
+      document.getElementById('user-name-sidebar').textContent = currentUser.name;
+      document.getElementById('user-role-sidebar').textContent = currentUser.role;
+      applyRoleMenuFiltering();
+      renderViewToggle();
+      navigate('dashboard');
+      // Clear any autofilled or restored credentials to prevent automatic login values
+      try {
+        const clearLoginFields = () => {
+          const userEl = document.getElementById('login-user');
+          const passEl = document.getElementById('login-pass');
+          if (userEl) { userEl.value = ''; }
+          if (passEl) { passEl.value = ''; }
+        };
+        // Clear immediately and again shortly after to counter browsers that restore values
+        clearLoginFields();
+        window.addEventListener('pageshow', () => setTimeout(clearLoginFields, 50));
+        document.addEventListener('DOMContentLoaded', () => setTimeout(clearLoginFields, 50));
+      } catch (e) {}
+      showNotif(`Welcome back, ${currentUser.name.split(' ')[0]}!`, 'success');
+    } else {
+      console.error('Login failed:', res.msg);
+      showAlert(res.msg || 'Invalid credentials');
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    showAlert('Network error: ' + (err.message || 'Unable to connect to server'));
+  }
+}
+
+function showAlert(msg) {
+  const al = document.getElementById('auth-alert');
+  al.textContent = msg; al.style.display = 'block';
+  setTimeout(() => al.style.display = 'none', 4000);
+}
+
+async function doLogout() {
+  await apiCall(AUTH_API, { action: 'logout' });
+  if (realtimeRefreshTimer) clearInterval(realtimeRefreshTimer);
+  realtimeRefreshTimer = null;
+  realtimeRefreshInFlight = false;
+  csrfTokenValue = '';
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  showNotif('Logged out successfully', 'info');
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function togglePasswordVisibility() {
+  const passInput = document.getElementById('login-pass');
+  const toggleBtn = event.target.closest('.password-toggle-btn');
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    toggleBtn.classList.add('active');
+  } else {
+    passInput.type = 'password';
+    toggleBtn.classList.remove('active');
+  }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(page) {
+  if (!isPageAllowed(page)) {
+    showNotif('Access denied for your role', 'error');
+    page = 'dashboard';
+  }
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const ni = document.querySelector(`.nav-item[onclick="navigate('${page}')"]`);
+  if (ni) ni.classList.add('active');
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  const pg = document.getElementById(`page-${page}`);
+  if (pg) pg.classList.add('active');
+  const info = pages[page] || { title: page, sub: '' };
+  document.getElementById('page-title').textContent = info.title;
+  document.getElementById('page-sub').textContent = info.sub;
+  document.getElementById('topbar-actions').innerHTML = topbarBtns[page] || '';
+  const renders = { dashboard: renderDashboard, prisoners: renderPrisoners, visitations: renderVisitations, incidents: renderIncidents, movements: renderMovements, cells: renderCells, shifts: renderShifts, court: renderCourt, reports: renderReports, medical: renderMedical, rehab: renderRehab, inventory: renderInventory, staff: renderStaff, auditlog: renderAudit };
+  renders['permissions'] = renderPermissions;
+  if (renders[page]) renders[page]();
+  startRealtimeRefresh(page);
+  try { const vt = document.getElementById('view-toggle'); if (vt) vt.value = page; } catch (e) {}
+}
+
+function startRealtimeRefresh(page) {
+  if (realtimeRefreshTimer) clearInterval(realtimeRefreshTimer);
+  if (!currentUser) return;
+  realtimeRefreshTimer = setInterval(async () => {
+    if (realtimeRefreshInFlight || !currentUser || document.hidden) return;
+    const activePage = document.querySelector('.page.active')?.id?.replace('page-', '');
+    if (activePage !== page) return;
+    const refreshers = { dashboard: renderDashboard, prisoners: renderPrisoners, visitations: renderVisitations, incidents: renderIncidents, movements: renderMovements, cells: renderCells, shifts: renderShifts, court: renderCourt, reports: renderReports, medical: renderMedical, rehab: renderRehab, inventory: renderInventory, staff: renderStaff, auditlog: renderAudit, permissions: renderPermissions };
+    if (!refreshers[page]) return;
+    realtimeRefreshInFlight = true;
+    try { await refreshers[page](); } finally { realtimeRefreshInFlight = false; }
+  }, 30000);
+}
+
+function switchTab(page, tab) {
+  document.querySelectorAll(`#page-${page} .tab`).forEach(t => t.classList.remove('active'));
+  document.querySelectorAll(`#page-${page} .tab-content`).forEach(t => t.classList.remove('active'));
+  document.querySelector(`#page-${page} .tab[onclick="switchTab('${page}','${tab}')"]`).classList.add('active');
+  document.getElementById(`${page}-tab-${tab}`).classList.add('active');
+  if (page === 'reports' && tab === 'statistics') renderReportStats();
+  if (page === 'shifts' && tab === 'swaps') renderSwaps();
+  if (page === 'inventory' && tab === 'transactions') renderTransactions();
+  if (page === 'inventory' && tab === 'lowstock') renderInventoryLowStock();
+  if (page === 'rehab' && tab === 'enrollments') renderEnrollments();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+async function openModal(type, id = null) {
+  editingId[type] = id;
+  const prisoners = await dbGetAll('prisoners');
+
+  if (type === 'prisoner') {
+    document.getElementById('prisoner-modal-title').textContent = id ? 'Edit Prisoner Record' : 'Register New Prisoner';
+    const cells = await dbGetAll('cells');
+    document.getElementById('p-cell').innerHTML = '<option value="">-- Unassigned --</option>' + cells.map(c => `<option value="${c.cellNumber}">${c.cellNumber} (${c.block}) - ${c.status}</option>`).join('');
+    if (id) {
+      const p = prisoners.find(p => p.id == id);
+      if (p) {
+        ['firstname','lastname','dob','gender','natid','nationality','address','emname','emphone','admdate','sentence','release','offense','security','status','notes'].forEach(f => { const el = document.getElementById('p-'+f); if (el) el.value = p[f] || ''; });
+        document.getElementById('p-casenumber').value = p.caseNumber || '';
+        document.getElementById('p-middlename').value = p.middlename || '';
+        document.getElementById('p-cell').value = p.cell || '';
+        const preview = document.getElementById('p-photo-preview');
+        const photoInput = document.getElementById('p-photo');
+        const photoBox = document.getElementById('p-photo-preview-box');
+        if (preview) {
+          if (p.photo) { preview.src = p.photo; preview.style.display = 'block'; if (photoBox) photoBox.classList.remove('placeholder'); } else { preview.src = ''; preview.style.display = 'none'; if (photoBox) photoBox.classList.add('placeholder'); }
+        }
+        if (photoInput) photoInput.value = '';
+      }
+    } else {
+      ['firstname','middlename','lastname','dob','natid','nationality','address','emname','emphone','sentence','release','offense','notes','casenumber'].forEach(f => { const el = document.getElementById('p-'+f); if (el) el.value = f==='nationality'?'Kenyan':''; });
+      document.getElementById('p-admdate').value = new Date().toISOString().split('T')[0];
+      const preview = document.getElementById('p-photo-preview');
+      const photoInput = document.getElementById('p-photo');
+      const photoBox = document.getElementById('p-photo-preview-box');
+      if (preview) { preview.src = ''; preview.style.display = 'none'; }
+      if (photoBox) photoBox.classList.add('placeholder');
+      if (photoInput) photoInput.value = '';
+    }
+  }
+
+  if (type === 'visit') {
+    document.getElementById('visit-modal-title').textContent = id ? 'Edit Visit Record' : 'Schedule Visitation';
+    document.getElementById('v-prisoner').innerHTML = prisoners.filter(p=>p.status==='Active').map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) document.getElementById('v-date').value = new Date().toISOString().slice(0,16);
+    if (id) {
+      const vs = await dbGetAll('visitations');
+      const v = vs.find(v => v.id == id);
+      if (v) { document.getElementById('v-prisoner').value = v.prisoner; ['visitorname','relationship','visitorid','phone','duration','type','status','notes'].forEach(f => { const el = document.getElementById('v-'+f); if (el) el.value = v[f]||''; }); document.getElementById('v-date').value = v.visitDate ? v.visitDate.slice(0,16) : ''; }
+    }
+  }
+
+  if (type === 'incident') {
+    document.getElementById('incident-modal-title').textContent = id ? 'Edit Incident' : 'File Incident Report';
+    document.getElementById('i-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('i-date').value = new Date().toISOString().slice(0,16); document.getElementById('i-officer').value = currentUser?.name || ''; ['others','location','description','action'].forEach(f => { const el = document.getElementById('i-'+f); if(el) el.value=''; }); }
+    if (id) { const incs = await dbGetAll('incidents'); const inc = incs.find(i=>i.id==id); if(inc){ document.getElementById('i-prisoner').value=inc.prisoner; ['type','severity','others','location','description','action','officer','status'].forEach(f=>{const el=document.getElementById('i-'+f);if(el)el.value=inc[f]||'';}); document.getElementById('i-date').value=(inc.incidentDate||'').slice(0,16); } }
+  }
+
+  if (type === 'cell') {
+    document.getElementById('cell-modal-title').textContent = id ? 'Edit Cell' : 'Add Cell';
+    if (id) {
+      const cells = await dbGetAll('cells');
+      const cell = cells.find(c => c.id == id);
+      if (cell) {
+        document.getElementById('c-cellnumber').value = cell.cellNumber || '';
+        document.getElementById('c-block').value = cell.block || '';
+        document.getElementById('c-capacity').value = cell.capacity || 2;
+        document.getElementById('c-status').value = cell.status || 'Available';
+      }
+    } else {
+      document.getElementById('c-cellnumber').value = '';
+      document.getElementById('c-block').value = '';
+      document.getElementById('c-capacity').value = 2;
+      document.getElementById('c-status').value = 'Available';
+    }
+  }
+
+  if (type === 'movement') {
+    document.getElementById('movement-modal-title').textContent = 'Log Movement';
+    document.getElementById('m-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    document.getElementById('m-date').value = new Date().toISOString().slice(0,16);
+    document.getElementById('m-officer').value = currentUser?.name || '';
+    ['location','reason','notes'].forEach(f => { const el = document.getElementById('m-'+f); if(el) el.value=''; });
+  }
+
+  if (type === 'court') {
+    document.getElementById('court-modal-title').textContent = id ? 'Edit Court Case' : 'Add Court Case';
+    document.getElementById('c-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('c-filingdate').value = new Date().toISOString().split('T')[0]; ['casenumber','court','charges','judge','prosecutor','defense','hearingdate','sentence','notes'].forEach(f => { const el = document.getElementById('c-'+f); if(el) el.value=''; }); document.getElementById('c-fine').value='0'; }
+    if (id) { const cases = await dbGetAll('court'); const c = cases.find(c=>c.id==id); if(c){ document.getElementById('c-prisoner').value=c.prisoner; ['casenumber','court','charges','judge','prosecutor','defense','filingdate','hearingdate','verdict','sentence','status','fine','notes'].forEach(f=>{const el=document.getElementById('c-'+f);if(el)el.value=c[f]||'';}); } }
+  }
+
+  if (type === 'report') {
+    document.getElementById('r-prisoner').innerHTML = '<option value="">-- General --</option>' + prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    document.getElementById('r-author').value = currentUser?.name || '';
+    ['title','body'].forEach(f => { const el = document.getElementById('r-'+f); if(el) el.value=''; });
+  }
+
+  if (type === 'medical') {
+    document.getElementById('med-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('med-date').value = new Date().toISOString().split('T')[0]; ['condition','treatment','doctor','notes'].forEach(f => { const el = document.getElementById('med-'+f); if(el) el.value=''; }); }
+    if (id) { const recs = await dbGetAll('medical'); const r = recs.find(r=>r.id==id); if(r){ document.getElementById('med-prisoner').value=r.prisoner; ['condition','treatment','doctor','status','notes'].forEach(f=>{const el=document.getElementById('med-'+f);if(el)el.value=r[f]||'';}); document.getElementById('med-date').value=r.medDate||''; } }
+  }
+
+  if (type === 'staff') {
+    document.getElementById('staff-modal-title').textContent = id ? 'Edit Staff Member' : 'Add Staff Member';
+    if (!id) { ['firstname','lastname','dept','badge','username','password'].forEach(f => { const el = document.getElementById('st-'+f); if(el) el.value=''; }); }
+    if (id) { const st = await dbGetAll('staff'); const s = st.find(s=>s.id==id); if(s){ ['firstname','lastname','role','dept','badge','username','status'].forEach(f=>{const el=document.getElementById('st-'+f);if(el)el.value=s[f]||'';}); document.getElementById('st-password').value=''; } }
+  }
+
+
+  // -- SHIFT ------------------------------------------------
+  if (type === 'shift') {
+    document.getElementById('shift-modal-title').textContent = id ? 'Edit Shift' : 'Schedule Shift';
+    const staff = await dbGetAll('staff');
+    document.getElementById('sh-staff').innerHTML = staff.filter(s=>s.status==='Active').map(s=>`<option value="${s.staffId}">${s.staffId} - ${s.firstname} ${s.lastname} (${s.role})</option>`).join('');
+    if (!id) { document.getElementById('sh-date').value = new Date().toISOString().split('T')[0]; document.getElementById('sh-start').value='06:00'; document.getElementById('sh-end').value='14:00'; ['sh-location','sh-supervisor','sh-notes'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); }
+    if (id) { const shifts=await dbGetAll('shifts'); const s=shifts.find(s=>s.id==id); if(s){ document.getElementById('sh-staff').value=s.staffId; document.getElementById('sh-type').value=s.shiftType||'Morning'; document.getElementById('sh-date').value=s.shiftDate||''; document.getElementById('sh-start').value=s.startTime||''; document.getElementById('sh-end').value=s.endTime||''; document.getElementById('sh-location').value=s.location||''; document.getElementById('sh-supervisor').value=s.supervisor||''; document.getElementById('sh-status').value=s.status||'Scheduled'; document.getElementById('sh-notes').value=s.notes||''; } }
+  }
+
+  // -- SWAP -------------------------------------------------
+  if (type === 'swap') { ['sw-shift','sw-by','sw-with','sw-reason','sw-approved'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); }
+
+  // -- INVENTORY ITEM ----------------------------------------
+  if (type === 'inv_item') {
+    document.getElementById('inv-item-modal-title').textContent = id ? 'Edit Item' : 'Add Inventory Item';
+    if (!id) { ['ii-name','ii-description','ii-supplier','ii-location'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); document.getElementById('ii-quantity').value=0; document.getElementById('ii-minqty').value=5; document.getElementById('ii-maxqty').value=100; document.getElementById('ii-unitcost').value=0; }
+    if (id) { const items=await dbGetAll('inventory'); const it=items.find(i=>i.id==id); if(it){ document.getElementById('ii-name').value=it.name||''; document.getElementById('ii-category').value=it.category||''; document.getElementById('ii-description').value=it.description||''; document.getElementById('ii-unit').value=it.unit||'pcs'; document.getElementById('ii-quantity').value=it.quantity||0; document.getElementById('ii-minqty').value=it.minQuantity||5; document.getElementById('ii-maxqty').value=it.maxQuantity||100; document.getElementById('ii-unitcost').value=it.unitCost||0; document.getElementById('ii-supplier').value=it.supplier||''; document.getElementById('ii-location').value=it.location||''; document.getElementById('ii-restocked').value=it.lastRestocked||''; } }
+  }
+
+  // -- INVENTORY TRANSACTION ---------------------------------
+  if (type === 'inv_txn') {
+    const items = await dbGetAll('inventory');
+    document.getElementById('txn-item').innerHTML = items.map(i=>`<option value="${i.id}">${i.itemCode} - ${i.name} (${i.quantity} ${i.unit})</option>`).join('');
+    document.getElementById('txn-auth').value = currentUser?.name || '';
+    ['txn-issuedto','txn-purpose','txn-notes'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    document.getElementById('txn-qty').value = 1;
+  }
+
+  // -- REHAB PROGRAM -----------------------------------------
+  if (type === 'rehab_prog') {
+    document.getElementById('rehab-prog-modal-title').textContent = id ? 'Edit Program' : 'Add Rehabilitation Program';
+    if (!id) { ['rp-name','rp-description','rp-facilitator','rp-schedule','rp-venue','rp-start','rp-end'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); document.getElementById('rp-capacity').value=20; }
+    if (id) { const progs=await dbGetAll('rehab_programs'); const p=progs.find(p=>p.id==id); if(p){ document.getElementById('rp-name').value=p.name||''; document.getElementById('rp-type').value=p.type||''; document.getElementById('rp-description').value=p.description||''; document.getElementById('rp-facilitator').value=p.facilitator||''; document.getElementById('rp-schedule').value=p.schedule||''; document.getElementById('rp-venue').value=p.venue||''; document.getElementById('rp-capacity').value=p.capacity||20; document.getElementById('rp-start').value=p.startDate||''; document.getElementById('rp-end').value=p.endDate||''; document.getElementById('rp-status').value=p.status||'Active'; } }
+  }
+
+  // -- ENROLLMENT --------------------------------------------
+  if (type === 'enrollment') {
+    document.getElementById('enroll-modal-title').textContent = id ? 'Edit Enrollment' : 'Enroll Prisoner';
+    const progs = await dbGetAll('rehab_programs');
+    document.getElementById('en-program').innerHTML = progs.filter(p=>p.status==='Active').map(p=>`<option value="${p.id}">${p.programId} - ${p.name}</option>`).join('');
+    document.getElementById('en-prisoner').innerHTML = prisoners.filter(p=>p.status==='Active').map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('en-date').value=new Date().toISOString().split('T')[0]; document.getElementById('en-progress').value=0; ['en-completion','en-grade','en-notes'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); }
+    if (id) { const enrs=await dbGetAll('rehab_enrollments'); const e=enrs.find(e=>e.id==id); if(e){ document.getElementById('en-program').value=e.programId; document.getElementById('en-prisoner').value=e.prisoner; document.getElementById('en-date').value=e.enrollDate||''; document.getElementById('en-completion').value=e.completionDate||''; document.getElementById('en-progress').value=e.progress||0; document.getElementById('en-grade').value=e.grade||''; document.getElementById('en-status').value=e.status||'Active'; document.getElementById('en-notes').value=e.notes||''; } }
+  }
+
+  document.getElementById(`modal-${type}`).classList.add('open');
+}
+
+function closeModal(type) {
+  document.getElementById(`modal-${type}`).classList.remove('open');
+  editingId[type] = null;
+}
+
+// ============================================================
+// SAVE FUNCTIONS
+// ============================================================
+function prisonerFullName(pid, prisoners) {
+  const p = prisoners.find(p => p.prisonerId === pid);
+  return p ? `${p.firstname} ${p.lastname}` : pid;
+}
+
+function previewPrisonerPhoto(input) {
+  const preview = document.getElementById('p-photo-preview');
+  const holder = document.getElementById('p-photo-preview-box');
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      showNotif('Please choose an image file', 'error');
+      input.value = '';
+      if (preview) { preview.src = ''; preview.style.display = 'none'; }
+      if (holder) holder.classList.add('placeholder');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (preview) {
+        preview.src = reader.result;
+        preview.style.display = 'block';
+      }
+      if (holder) holder.classList.remove('placeholder');
+    };
+    reader.readAsDataURL(file);
+  } else if (preview) {
+    preview.src = '';
+    preview.style.display = 'none';
+    if (holder) holder.classList.add('placeholder');
+  }
+}
+
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Unable to read image file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function savePrisoner() {
+  const fn = document.getElementById('p-firstname').value.trim();
+  const ln = document.getElementById('p-lastname').value.trim();
+  if (!fn || !ln) return showNotif('First and last name required', 'error');
+  const isEdit = !!editingId['prisoner'];
+  const prisoners = await dbGetAll('prisoners');
+  const existing = isEdit ? prisoners.find(p => p.id == editingId['prisoner']) : null;
+  let photoData = existing?.photo || '';
+  const photoInput = document.getElementById('p-photo');
+  if (photoInput && photoInput.files && photoInput.files[0]) {
+    try {
+      photoData = await readFileAsDataURL(photoInput.files[0]);
+    } catch (err) {
+      return showNotif('Unable to read selected photo', 'error');
+    }
+  }
+  const data = {
+    id: isEdit ? editingId['prisoner'] : 0,
+    firstname: fn, middlename: document.getElementById('p-middlename').value.trim(),
+    lastname: ln, dob: document.getElementById('p-dob').value,
+    gender: document.getElementById('p-gender').value,
+    nationality: document.getElementById('p-nationality').value.trim(),
+    address: document.getElementById('p-address').value.trim(),
+    emname: document.getElementById('p-emname').value.trim(),
+    emphone: document.getElementById('p-emphone').value.trim(),
+    admdate: document.getElementById('p-admdate').value,
+    cell: document.getElementById('p-cell').value,
+    sentence: parseInt(document.getElementById('p-sentence').value) || 0,
+    release: document.getElementById('p-release').value,
+    offense: document.getElementById('p-offense').value.trim(),
+    security: document.getElementById('p-security').value,
+    status: document.getElementById('p-status').value,
+    notes: document.getElementById('p-notes').value.trim(),
+    caseNumber: document.getElementById('p-casenumber').value.trim(),
+    photo: photoData,
+  };
+  await dbPut('prisoners', data);
+  closeModal('prisoner'); showNotif(`Prisoner ${isEdit ? 'updated' : 'registered'} successfully`, 'success'); renderPrisoners(); updateNavCounts();
+}
+
+async function saveVisitation() {
+  const prisoner = document.getElementById('v-prisoner').value;
+  const visitorname = document.getElementById('v-visitorname').value.trim();
+  if (!prisoner || !visitorname) return showNotif('Prisoner and visitor name required', 'error');
+  const prisoners = await dbGetAll('prisoners');
+  const isEdit = !!editingId['visit'];
+  await dbPut('visitations', {
+    id: isEdit ? editingId['visit'] : 0,
+    prisoner, prisonerName: prisonerFullName(prisoner, prisoners),
+    visitorname, relationship: document.getElementById('v-relationship').value,
+    visitorid: document.getElementById('v-visitorid').value.trim(),
+    phone: document.getElementById('v-phone').value.trim(),
+    date: document.getElementById('v-date').value,
+    duration: parseInt(document.getElementById('v-duration').value)||30,
+    type: document.getElementById('v-type').value,
+    status: document.getElementById('v-status').value,
+    notes: document.getElementById('v-notes').value.trim(),
+  });
+  closeModal('visit'); showNotif('Visitation saved', 'success'); renderVisitations();
+}
+
+async function saveIncident() {
+  const prisoner = document.getElementById('i-prisoner').value;
+  const desc = document.getElementById('i-description').value.trim();
+  if (!prisoner || !desc) return showNotif('Prisoner and description required', 'error');
+  const prisoners = await dbGetAll('prisoners');
+  const isEdit = !!editingId['incident'];
+  await dbPut('incidents', {
+    id: isEdit ? editingId['incident'] : 0,
+    prisoner, prisonerName: prisonerFullName(prisoner, prisoners),
+    type: document.getElementById('i-type').value,
+    severity: document.getElementById('i-severity').value,
+    others: document.getElementById('i-others').value.trim(),
+    date: document.getElementById('i-date').value,
+    location: document.getElementById('i-location').value.trim(),
+    description: desc,
+    action: document.getElementById('i-action').value.trim(),
+    officer: document.getElementById('i-officer').value.trim(),
+    status: document.getElementById('i-status').value,
+  });
+  closeModal('incident'); showNotif('Incident saved', 'success'); renderIncidents();
+}
+
+async function saveCell() {
+  const cellNumber = document.getElementById('c-cellnumber').value.trim();
+  const block = document.getElementById('c-block').value.trim();
+  const capacity = parseInt(document.getElementById('c-capacity').value) || 1;
+  if (!cellNumber || !block) return showNotif('Cell number and block are required', 'error');
+  await dbPut('cells', {
+    id: editingId['cell'] || 0,
+    cellNumber,
+    block,
+    capacity,
+    status: document.getElementById('c-status').value,
+    occupied: 0
+  });
+  closeModal('cell');
+  showNotif(editingId['cell'] ? 'Cell updated' : 'Cell added', 'success');
+  renderCells();
+}
+
+async function saveMovement() {
+  const prisoner = document.getElementById('m-prisoner').value;
+  if (!prisoner) return showNotif('Prisoner required', 'error');
+  const prisoners = await dbGetAll('prisoners');
+  await dbPut('movements', {
+    id: 0,
+    prisoner, prisonerName: prisonerFullName(prisoner, prisoners),
+    type: document.getElementById('m-type').value,
+    location: document.getElementById('m-location').value.trim(),
+    reason: document.getElementById('m-reason').value.trim(),
+    officer: document.getElementById('m-officer').value.trim(),
+    date: document.getElementById('m-date').value,
+    notes: document.getElementById('m-notes').value.trim(),
+  });
+  closeModal('movement'); showNotif('Movement logged', 'success'); renderMovements();
+}
+
+async function saveCourt() {
+  const prisoner = document.getElementById('c-prisoner').value;
+  const casenumber = document.getElementById('c-casenumber').value.trim();
+  if (!prisoner || !casenumber) return showNotif('Prisoner and case number required', 'error');
+  const prisoners = await dbGetAll('prisoners');
+  const isEdit = !!editingId['court'];
+  await dbPut('court', {
+    id: isEdit ? editingId['court'] : 0,
+    prisoner, prisonerName: prisonerFullName(prisoner, prisoners),
+    casenumber, court: document.getElementById('c-court').value.trim(),
+    charges: document.getElementById('c-charges').value.trim(),
+    judge: document.getElementById('c-judge').value.trim(),
+    prosecutor: document.getElementById('c-prosecutor').value.trim(),
+    defense: document.getElementById('c-defense').value.trim(),
+    filingdate: document.getElementById('c-filingdate').value,
+    hearingdate: document.getElementById('c-hearingdate').value,
+    verdict: document.getElementById('c-verdict').value,
+    sentence: document.getElementById('c-sentence').value.trim(),
+    status: document.getElementById('c-status').value,
+    fine: parseInt(document.getElementById('c-fine').value)||0,
+    notes: document.getElementById('c-notes').value.trim(),
+  });
+  closeModal('court'); showNotif('Court case saved', 'success'); renderCourt();
+}
+
+async function saveReport() {
+  const title = document.getElementById('r-title').value.trim();
+  const body = document.getElementById('r-body').value.trim();
+  if (!title || !body) return showNotif('Title and body required', 'error');
+  await dbPut('reports', {
+    id: 0, title, type: document.getElementById('r-type').value,
+    prisoner: document.getElementById('r-prisoner').value,
+    body, author: document.getElementById('r-author').value.trim(),
+    date: new Date().toISOString(),
+  });
+  closeModal('report'); showNotif('Report submitted', 'success'); renderReports();
+}
+
+async function saveMedical() {
+  const prisoner = document.getElementById('med-prisoner').value;
+  const condition = document.getElementById('med-condition').value.trim();
+  if (!prisoner || !condition) return showNotif('Prisoner and condition required', 'error');
+  const prisoners = await dbGetAll('prisoners');
+  const isEdit = !!editingId['medical'];
+  await dbPut('medical', {
+    id: isEdit ? editingId['medical'] : 0,
+    prisoner, prisonerName: prisonerFullName(prisoner, prisoners),
+    condition, treatment: document.getElementById('med-treatment').value.trim(),
+    doctor: document.getElementById('med-doctor').value.trim(),
+    date: document.getElementById('med-date').value,
+    status: document.getElementById('med-status').value,
+    notes: document.getElementById('med-notes').value.trim(),
+  });
+  closeModal('medical'); showNotif('Medical record saved', 'success'); renderMedical();
+}
+
+async function saveStaff() {
+  const fn = document.getElementById('st-firstname').value.trim();
+  const uname = document.getElementById('st-username').value.trim();
+  if (!fn || !uname) return showNotif('Name and username required', 'error');
+  const isEdit = !!editingId['staff'];
+  await dbPut('staff', {
+    id: isEdit ? editingId['staff'] : 0,
+    firstname: fn, lastname: document.getElementById('st-lastname').value.trim(),
+    role: document.getElementById('st-role').value,
+    dept: document.getElementById('st-dept').value.trim(),
+    badge: document.getElementById('st-badge').value.trim(),
+    username: uname,
+    password: document.getElementById('st-password').value,
+    status: document.getElementById('st-status').value,
+  });
+  closeModal('staff'); showNotif('Staff record saved', 'success'); renderStaff();
+}
+
+// ============================================================
+// DELETE
+// ============================================================
+function confirmDelete(store, id, name) {
+  document.getElementById('confirm-msg').textContent = `Delete "${name}"? This action cannot be undone.`;
+  document.getElementById('confirm-ok-btn').onclick = async () => {
+    try {
+      await dbDelete(store, id);
+      closeModal('confirm'); showNotif('Record deleted', 'info');
+      const refreshMap = { prisoners: renderPrisoners, visitations: renderVisitations, incidents: renderIncidents, movements: renderMovements, cells: renderCells, shifts: renderShifts, shift_swaps: renderSwaps, court: renderCourt, reports: renderReports, medical: renderMedical, staff: renderStaff, audit: renderAudit, rehab_programs: renderRehabPrograms, rehab_enrollments: renderEnrollments, inventory_items: renderInventoryItems, inventory_transactions: renderTransactions };
+      if (refreshMap[store]) refreshMap[store]();
+      if (store === 'rehab_programs' || store === 'rehab_enrollments') { await renderRehabStats(); await renderDashboard(); }
+      updateNavCounts();
+    } catch(e) { showNotif(e.message, 'error'); }
+  };
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+// ============================================================
+// RENDER HELPERS
+// ============================================================
+function severityBadge(s) { const m={Low:'badge-green',Medium:'badge-amber',High:'badge-red',Critical:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'-'}</span>`; }
+function statusBadge(s) { const m={Active:'badge-green',Released:'badge-blue',Transferred:'badge-amber',Deceased:'badge-gray',Scheduled:'badge-blue',Completed:'badge-green',Denied:'badge-red',Cancelled:'badge-gray',Open:'badge-amber','Under Review':'badge-blue',Resolved:'badge-green',Closed:'badge-gray',Ongoing:'badge-amber',Referred:'badge-purple',Critical:'badge-red',Available:'badge-green',Maintenance:'badge-amber',Full:'badge-red','Low Stock':'badge-amber','Out of Stock':'badge-red',Upcoming:'badge-blue',Suspended:'badge-amber',Absent:'badge-red',Swapped:'badge-purple',Approved:'badge-green',Pending:'badge-amber',Rejected:'badge-red',Dropped:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'-'}</span>`; }
+function fmtDate(d) { if(!d) return '-'; try { return new Date(d).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'}); } catch{return d;} }
+function fmtDateTime(d) { if(!d) return '-'; try { return new Date(d).toLocaleString('en-KE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); } catch{return d;} }
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+async function renderDashboard() {
+  renderDashboardActivity();
+  const stats = await getStats();
+  document.getElementById('stat-total').textContent    = stats.total_prisoners || 0;
+  document.getElementById('stat-housed').textContent   = stats.active_prisoners || 0;
+  document.getElementById('stat-incidents').textContent= stats.incidents_30d || 0;
+  document.getElementById('stat-visits').textContent   = stats.visits_today || 0;
+  if(document.getElementById('stat-shifts')) document.getElementById('stat-shifts').textContent = stats.shifts_today || 0;
+  if(document.getElementById('stat-lowstock')) document.getElementById('stat-lowstock').textContent = stats.low_stock_items || 0;
+  if(document.getElementById('stat-rehab')) document.getElementById('stat-rehab').textContent = stats.active_rehab || 0;
+
+  const [prisoners, incidents, auditFallback, auditDirect] = await Promise.all([dbGetAll('prisoners'), dbGetAll('incidents'), dbGetAll('dashboard_audit'), dbGetAll('audit')]);
+  const audit = (Array.isArray(stats.recent_activity) && stats.recent_activity.length) ? stats.recent_activity : (auditFallback.length ? auditFallback : auditDirect);
+
+  const admTbody = document.getElementById('dash-admissions-body');
+  const recent = [...prisoners].sort((a,b)=>new Date(b.admdate)-new Date(a.admdate)).slice(0,5);
+  admTbody.innerHTML = recent.map(p=>`<tr><td class="text-mono text-accent">${p.prisonerId}</td><td style="color:var(--text)">${p.firstname} ${p.lastname}</td><td>${p.cell||'-'}</td><td>${fmtDate(p.admdate)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3)">No data</td></tr>';
+
+  const incTbody = document.getElementById('dash-incidents-body');
+  const recentInc = [...incidents].sort((a,b)=>new Date(b.incidentDate||b.created_at)-new Date(a.incidentDate||a.created_at)).slice(0,5);
+  incTbody.innerHTML = recentInc.map(i=>`<tr><td>${i.type}</td><td style="color:var(--text)">${i.prisonerName}</td><td>${severityBadge(i.severity)}</td><td>${fmtDate(i.incidentDate)}</td></tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3)">No incidents</td></tr>';
+
+  const actDiv = document.getElementById('dash-activity');
+  const recent10 = [...audit].sort((a,b)=>new Date(b.ts)-new Date(a.ts) || b.id-a.id).slice(0,10);
+  actDiv.innerHTML = recent10.map(a=>`<div class="log-item"><div class="log-icon" style="background:var(--bg4)"><svg viewBox="0 0 24 24" fill="var(--accent)" width="16" height="16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div class="log-text"><div class="log-title">${a.action} - ${a.module}</div><div class="log-meta">${a.user} | ${a.details||''}</div></div><div class="log-time">${fmtDateTime(a.ts)}</div></div>`).join('') || '<div style="color:var(--text3);font-size:13px;padding:8px">No activity yet</div>';
+
+  updateNavCounts();
+}
+
+async function renderDashboardActivity() {
+  const target = document.getElementById('dash-activity');
+  if (!target) return;
+  try {
+    const response = await apiCall(`api/data.php?action=get&store=dashboard_audit&_=${Date.now()}`);
+    const records = response.success && Array.isArray(response.data) ? response.data : [];
+    const recent10 = records.sort((a, b) => new Date(b.ts) - new Date(a.ts) || Number(b.id) - Number(a.id)).slice(0, 10);
+    target.innerHTML = recent10.map(a => `<div class="log-item"><div class="log-icon" style="background:var(--bg4)"><svg viewBox="0 0 24 24" fill="var(--accent)" width="16" height="16"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg></div><div class="log-text"><div class="log-title">${a.action || 'Activity'} - ${a.module || 'System'}</div><div class="log-meta">${a.user || 'System'} | ${a.details || ''}</div></div><div class="log-time">${fmtDateTime(a.ts)}</div></div>`).join('') || '<div style="color:var(--text3);font-size:13px;padding:8px">No activity recorded.</div>';
+  } catch (error) {
+    target.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px">Activity log unavailable.</div>';
+  }
+}
+
+async function updateNavCounts() {
+  const [prisoners, enrollments, items] = await Promise.all([dbGetAll('prisoners'), dbGetAll('rehab_enrollments'), dbGetAll('inventory')]);
+  document.getElementById('nav-prisoner-count').textContent = prisoners.filter(p=>p.status==='Active').length;
+  const rehabEl = document.getElementById('nav-rehab-count');
+  if(rehabEl) rehabEl.textContent = enrollments.filter(e=>e.status==='Active').length;
+  const stockEl = document.getElementById('nav-stock-alert');
+  const lowStock = items.filter(i=>i.status==='Low Stock'||i.status==='Out of Stock').length;
+  if(stockEl){ stockEl.style.display = lowStock>0?'':'none'; }
+}
+
+async function renderPrisoners() {
+  const prisoners = await dbGetAll('prisoners');
+  const q = (document.getElementById('prisoner-search')?.value||'').toLowerCase();
+  const sf = document.getElementById('prisoner-filter')?.value||'';
+  const tbody = document.getElementById('prisoners-tbody');
+  let filtered = getFilteredData(prisoners, 'prisoner');
+  filtered = filtered.filter(p => (!sf||p.status===sf) && (!q||`${p.firstname} ${p.lastname} ${p.prisonerId}`.toLowerCase().includes(q)));
+  tbody.innerHTML = filtered.map(p=>`<tr><td class="text-mono text-accent">${p.prisonerId}</td><td style="color:var(--text)">${p.firstname} ${p.lastname}</td><td>${fmtDate(p.dob)}</td><td>${p.prisonerType||'—'}</td><td>${p.cell||'—'}</td><td>${p.sentence||0} mo.</td><td>${statusBadge(p.status)}</td><td>${renderViewAction('prisoner',p.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('prisoner',${p.id})">Edit</button> <button class="btn btn-export btn-sm" onclick="openPrisonerReport(${Number(p.id)})">Export Report</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('prisoners',${p.id},'${p.firstname} ${p.lastname}')">Del</button></td></tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">No prisoners found</td></tr>`;
+}
+
+async function renderVisitations() {
+  const visits = await dbGetAll('visitations');
+  const q = (document.getElementById('visit-search')?.value||'').toLowerCase();
+  const tbody = document.getElementById('visit-tbody');
+  let filtered = getFilteredData(visits, 'visit');
+  filtered = filtered.filter(v => !q || `${v.prisonerName} ${v.visitorname} ${v.visitId}`.toLowerCase().includes(q));
+  tbody.innerHTML = filtered.map(v=>`<tr><td class="text-mono text-accent">${v.visitId}</td><td style="color:var(--text)">${v.prisonerName}</td><td>${v.visitorname}</td><td>${v.relationship||'-'}</td><td>${fmtDateTime(v.visitDate)}</td><td>${statusBadge(v.status)}</td><td>${renderViewAction('visit',v.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('visit',${v.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('visitations',${v.id},'${v.visitId}')">Del</button></td></tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">No visits found</td></tr>`;
+}
+
+async function renderIncidents() {
+  const incidents = await dbGetAll('incidents');
+  const q = (document.getElementById('incident-search')?.value||'').toLowerCase();
+  const sf = document.getElementById('incident-severity-filter')?.value||'';
+  const tbody = document.getElementById('incident-tbody');
+  const filtered = incidents.filter(i => (!sf||i.severity===sf) && (!q||`${i.prisonerName} ${i.type} ${i.incidentId}`.toLowerCase().includes(q)));
+  tbody.innerHTML = filtered.map(i=>`<tr><td class="text-mono text-accent">${i.incidentId}</td><td>${i.type}</td><td style="color:var(--text)">${i.prisonerName}</td><td>${i.location||'-'}</td><td>${severityBadge(i.severity)}</td><td>${fmtDate(i.incidentDate)}</td><td>${statusBadge(i.status)}</td><td>${renderViewAction('incident',i.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('incident',${i.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('incidents',${i.id},'${i.incidentId}')">Del</button></td></tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">No incidents found</td></tr>`;
+}
+
+async function renderMovements() {
+  const movements = await dbGetAll('movements');
+  const q = (document.getElementById('movement-search')?.value||'').toLowerCase();
+  const today = new Date().toDateString();
+  document.getElementById('stat-checkin').textContent = movements.filter(m=>m.type==='Check-In'&&new Date(m.moveDate||m.created_at).toDateString()===today).length;
+  document.getElementById('stat-checkout').textContent = movements.filter(m=>m.type==='Check-Out'&&new Date(m.moveDate||m.created_at).toDateString()===today).length;
+  document.getElementById('stat-movements').textContent = movements.length;
+  const tbody = document.getElementById('movement-tbody');
+  const filtered = movements.filter(m => !q || `${m.prisonerName} ${m.logId} ${m.type}`.toLowerCase().includes(q));
+  tbody.innerHTML = filtered.map(m=>`<tr><td class="text-mono text-accent">${m.logId}</td><td style="color:var(--text)">${m.prisonerName}</td><td>${statusBadge(m.type)}</td><td>${m.location||'-'}</td><td>${m.reason||'-'}</td><td>${m.officer||'-'}</td><td>${fmtDateTime(m.moveDate)}</td><td>${renderViewAction('movement',m.id)}</td></tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">No movements</td></tr>`;
+}
+
+async function renderCells() {
+  const cells = await dbGetAll('cells');
+  const tbody = document.getElementById('cells-tbody');
+  tbody.innerHTML = cells.map(c=>`<tr><td class="text-mono text-accent">${c.cellNumber}</td><td>${c.block||'-'}</td><td>${c.capacity}</td><td>${c.occupied||0}</td><td>${statusBadge(c.status)}</td><td>${renderViewAction('cell',c.id)} <button class="btn btn-danger btn-sm" onclick="confirmDelete('cells',${c.id},'Cell ${c.cellNumber}')">Del</button></td></tr>`).join('') || `<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px">No cells</td></tr>`;
+}
+
+async function renderCourt() {
+  const cases = await dbGetAll('court');
+  const q = (document.getElementById('court-search')?.value||'').toLowerCase();
+  const tbody = document.getElementById('court-tbody');
+  const filtered = cases.filter(c => !q || `${c.prisonerName} ${c.caseId} ${c.casenumber}`.toLowerCase().includes(q));
+  tbody.innerHTML = filtered.map(c=>`<tr><td class="text-mono text-accent">${c.casenumber}</td><td style="color:var(--text)">${c.prisonerName}</td><td>${c.charges||'-'}</td><td>${c.court||'-'}</td><td>${c.verdict||'Pending'}</td><td>${statusBadge(c.status)}</td><td>${renderViewAction('court',c.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('court',${c.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('court',${c.id},'${c.casenumber}')">Del</button></td></tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">No cases</td></tr>`;
+}
+
+async function renderReports() {
+  if (typeof initReportsDashboard === 'function') {
+    await initReportsDashboard();
+    return;
+  }
+  const reports = await dbGetAll('reports');
+  const div = document.getElementById('reports-list');
+  if (!div) return;
+  if (!reports.length) { div.innerHTML = '<div class="empty-state"><p>No reports yet.</p></div>'; return; }
+  div.innerHTML = [...reports].sort((a,b)=>new Date(b.reportDate||b.created_at)-new Date(a.reportDate||a.created_at)).map(r=>`<div class="report-card"><div style="display:flex;align-items:flex-start;justify-content:space-between"><div><div class="report-title">${r.title}</div><div class="report-meta">${r.reportId} &nbsp;|&nbsp; ${r.type} &nbsp;|&nbsp; ${r.author} &nbsp;|&nbsp; ${fmtDateTime(r.reportDate||r.created_at)}</div></div><div>${renderViewAction('report',r.id)} <button class="btn btn-danger btn-sm" onclick="confirmDelete('reports',${r.id},'${r.title}')">Delete</button></div></div><div class="report-body">${r.body}</div></div>`).join('');
+}
+
+async function renderReportStats() {
+  const stats = await getStats();
+  document.getElementById('avg-sentence').textContent   = (stats.avg_sentence||0) + ' mo.';
+  document.getElementById('occupancy-rate').textContent = (stats.occupancy_rate||0) + '%';
+  document.getElementById('incident-rate').textContent  = stats.incident_rate||'0';
+  document.getElementById('total-visits-stat').textContent = stats.total_visits||0;
+}
+
+async function renderMedical() {
+  const recs = await dbGetAll('medical');
+  const q = (document.getElementById('medical-search')?.value||'').toLowerCase();
+  const tbody = document.getElementById('medical-tbody');
+  const filtered = recs.filter(r => !q || `${r.prisonerName} ${r.condition} ${r.recordId}`.toLowerCase().includes(q));
+  tbody.innerHTML = filtered.map(r=>`<tr><td class="text-mono text-accent">${r.recordId}</td><td style="color:var(--text)">${r.prisonerName}</td><td>${r.condition}</td><td>${r.doctor||'-'}</td><td>${fmtDate(r.medDate)}</td><td>${statusBadge(r.status)}</td><td>${renderViewAction('medical',r.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('medical',${r.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('medical',${r.id},'${r.condition}')">Del</button></td></tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">No records</td></tr>`;
+}
+
+async function renderStaff() {
+  const staff = await dbGetAll('staff');
+  const tbody = document.getElementById('staff-tbody');
+  tbody.innerHTML = staff.map(s=>`<tr><td class="text-mono text-accent">${s.staffId}</td><td style="color:var(--text)">${s.firstname} ${s.lastname}</td><td>${s.role}</td><td>${s.dept||'—'}</td><td class="text-mono">${s.badge||'—'}</td><td>${statusBadge(s.status)}</td><td>${s.lastlogin?fmtDateTime(s.lastlogin):'Never'}</td><td><span class="table-actions">${renderViewAction('staff',s.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('staff',${s.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('staff',${s.id},'${s.firstname} ${s.lastname}')">Del</button></span></td></tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">No staff records</td></tr>`;
+}
+
+async function renderAudit() {
+  const audit = await dbGetAll('audit_log');
+  const tbody = document.getElementById('audit-tbody');
+  tbody.innerHTML = [...audit].sort((a,b)=>new Date(b.ts)-new Date(a.ts)).slice(0,200).map(a=>`<tr><td class="text-mono" style="font-size:12px">${fmtDateTime(a.ts)}</td><td style="color:var(--text)">${a.user}</td><td><span class="badge ${a.action==='LOGIN'?'badge-green':a.action==='LOGOUT'?'badge-amber':a.action==='DELETE'?'badge-red':'badge-blue'}">${a.action}</span></td><td>${a.module}</td><td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${a.details||''}</td><td class="text-mono" style="font-size:12px">${a.ip}</td><td>${renderViewAction('audit',a.id)}</td></tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">No audit entries</td></tr>`;
+}
+
+
+// -- SAVE: Shift -----------------------------------------------
+async function saveShift() {
+  const staffSel = document.getElementById('sh-staff');
+  const staffId = staffSel.value;
+  const staffText = staffSel.options[staffSel.selectedIndex]?.text || '';
+  const staffName = staffText.includes(' - ') ? staffText.split(' - ')[1].split(' (')[0] : staffText;
+  const shiftDate = document.getElementById('sh-date').value;
+  if (!staffId || !shiftDate) return showNotif('Staff and date required', 'error');
+  const isEdit = !!editingId['shift'];
+  await dbPut('shifts', { id: isEdit ? editingId['shift'] : 0, staffId, staffName, shiftType: document.getElementById('sh-type').value, date: shiftDate, startTime: document.getElementById('sh-start').value, endTime: document.getElementById('sh-end').value, location: document.getElementById('sh-location').value.trim(), supervisor: document.getElementById('sh-supervisor').value.trim(), status: document.getElementById('sh-status').value, notes: document.getElementById('sh-notes').value.trim() });
+  closeModal('shift'); showNotif(`Shift ${isEdit?'updated':'scheduled'}`, 'success'); renderShifts();
+}
+
+// -- SAVE: Swap ------------------------------------------------
+async function saveSwap() {
+  const by = document.getElementById('sw-by').value.trim();
+  const withWho = document.getElementById('sw-with').value.trim();
+  if (!by || !withWho) return showNotif('Both staff names required', 'error');
+  await dbPut('shift_swaps', { id: 0, originalShift: parseInt(document.getElementById('sw-shift').value) || 0, requestedBy: by, swapWith: withWho, reason: document.getElementById('sw-reason').value.trim(), status: document.getElementById('sw-status').value, approvedBy: document.getElementById('sw-approved').value.trim() });
+  closeModal('swap'); showNotif('Swap request submitted', 'success'); renderSwaps();
+}
+
+// -- SAVE: Inventory Item --------------------------------------
+async function saveInventoryItem() {
+  const name = document.getElementById('ii-name').value.trim();
+  if (!name) return showNotif('Item name required', 'error');
+  const isEdit = !!editingId['inv_item'];
+  await dbPut('inventory_items', { id: isEdit ? editingId['inv_item'] : 0, name, category: document.getElementById('ii-category').value, description: document.getElementById('ii-description').value.trim(), unit: document.getElementById('ii-unit').value, quantity: parseInt(document.getElementById('ii-quantity').value) || 0, minQuantity: parseInt(document.getElementById('ii-minqty').value) || 5, maxQuantity: parseInt(document.getElementById('ii-maxqty').value) || 100, unitCost: parseFloat(document.getElementById('ii-unitcost').value) || 0, supplier: document.getElementById('ii-supplier').value.trim(), location: document.getElementById('ii-location').value.trim(), lastRestocked: document.getElementById('ii-restocked').value });
+  closeModal('inv_item'); showNotif(`Item ${isEdit?'updated':'added'}`, 'success'); renderInventory();
+}
+
+// -- SAVE: Transaction -----------------------------------------
+async function saveTransaction() {
+  const itemId = parseInt(document.getElementById('txn-item').value);
+  const qty = parseInt(document.getElementById('txn-qty').value) || 0;
+  if (!itemId || qty < 1) return showNotif('Item and quantity required', 'error');
+  const items = await dbGetAll('inventory');
+  const item = items.find(i => i.id == itemId);
+  await dbPut('inventory_transactions', { id: 0, itemId, itemCode: item?.itemCode || '', itemName: item?.name || '', type: document.getElementById('txn-type').value, quantity: qty, issuedTo: document.getElementById('txn-issuedto').value.trim(), purpose: document.getElementById('txn-purpose').value.trim(), authorizedBy: document.getElementById('txn-auth').value.trim(), notes: document.getElementById('txn-notes').value.trim() });
+  closeModal('inv_txn'); showNotif('Transaction recorded', 'success'); renderInventory();
+}
+
+// -- SAVE: Rehab Program ---------------------------------------
+async function saveRehabProgram() {
+  const name = document.getElementById('rp-name').value.trim();
+  if (!name) return showNotif('Program name required', 'error');
+  const isEdit = !!editingId['rehab_prog'];
+  await dbPut('rehab_programs', { id: isEdit ? editingId['rehab_prog'] : 0, name, type: document.getElementById('rp-type').value, description: document.getElementById('rp-description').value.trim(), facilitator: document.getElementById('rp-facilitator').value.trim(), schedule: document.getElementById('rp-schedule').value.trim(), venue: document.getElementById('rp-venue').value.trim(), capacity: parseInt(document.getElementById('rp-capacity').value) || 20, startDate: document.getElementById('rp-start').value, endDate: document.getElementById('rp-end').value, status: document.getElementById('rp-status').value });
+  closeModal('rehab_prog'); showNotif(`Program ${isEdit?'updated':'added'}`, 'success'); await renderRehab(); await renderDashboard();
+}
+
+// -- SAVE: Enrollment ------------------------------------------
+async function saveEnrollment() {
+  const programId = document.getElementById('en-program').value;
+  const prisoner = document.getElementById('en-prisoner').value;
+  if (!programId || !prisoner) return showNotif('Program and prisoner required', 'error');
+  const [prisoners, progs] = await Promise.all([dbGetAll('prisoners'), dbGetAll('rehab_programs')]);
+  const prog = progs.find(p => p.id == programId);
+  const isEdit = !!editingId['enrollment'];
+  await dbPut('rehab_enrollments', { id: isEdit ? editingId['enrollment'] : 0, programId: parseInt(programId), programName: prog?.name || '', prisoner, prisonerName: pfn(prisoner, prisoners), enrollDate: document.getElementById('en-date').value, completionDate: document.getElementById('en-completion').value, progress: parseInt(document.getElementById('en-progress').value) || 0, grade: document.getElementById('en-grade').value.trim(), status: document.getElementById('en-status').value, notes: document.getElementById('en-notes').value.trim() });
+  closeModal('enrollment'); showNotif('Enrollment saved', 'success'); await renderEnrollments(); await renderRehabStats(); await updateNavCounts(); await renderDashboard();
+}
+
+// -- RENDER: Shifts --------------------------------------------
+async function renderShifts() {
+  const shifts = await dbGetAll('shifts');
+  const q = (document.getElementById('shift-search')?.value || '').toLowerCase();
+  const tf = document.getElementById('shift-type-filter')?.value || '';
+  const today = new Date().toDateString();
+  const todayShifts = shifts.filter(s => new Date(s.shiftDate).toDateString() === today);
+  if(document.getElementById('shift-today-count')) document.getElementById('shift-today-count').textContent = todayShifts.length;
+  if(document.getElementById('shift-active-count')) document.getElementById('shift-active-count').textContent = shifts.filter(s => s.status === 'Active').length;
+  const filtered = shifts.filter(s => (!tf || s.shiftType === tf) && (!q || `${s.staffName} ${s.shiftId} ${s.location||''} ${s.shiftType}`.toLowerCase().includes(q)));
+  document.getElementById('shifts-tbody').innerHTML = filtered.map(s => `<tr><td class="text-mono text-accent">${s.shiftId}</td><td style="color:var(--text)">${s.staffName}</td><td><span class="badge ${shiftTypeBadge(s.shiftType)}">${s.shiftType}</span></td><td>${fmtDate(s.shiftDate)}</td><td class="text-mono">${s.startTime||'-'}</td><td class="text-mono">${s.endTime||'-'}</td><td>${s.location||'-'}</td><td>${s.supervisor||'-'}</td><td>${statusBadge(s.status)}</td><td style="white-space:nowrap">${renderViewAction('shift',s.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('shift',${s.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('shifts',${s.id},'${s.shiftId}')">Del</button></td></tr>`).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:40px">No shifts found</td></tr>`;
+}
+
+async function renderSwaps() {
+  const swaps = await dbGetAll('shift_swaps');
+  if (document.getElementById('shift-swap-count')) document.getElementById('shift-swap-count').textContent = swaps.filter(s => s.status === 'Pending').length;
+  document.getElementById('swaps-tbody').innerHTML = swaps.map(s => `<tr><td class="text-mono text-accent">${s.swapId}</td><td style="color:var(--text)">${s.requestedBy}</td><td>${s.swapWith}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.reason||'-'}</td><td>${statusBadge(s.status)}</td><td>${s.approvedBy||'-'}</td><td>${fmtDateTime(s.requestDate||s.created_at)}</td><td><button class="btn btn-danger btn-sm" onclick="confirmDelete('shift_swaps',${s.id},'${s.swapId}')">Del</button></td></tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">No swap requests</td></tr>`;
+}
+
+// -- RENDER: Inventory -----------------------------------------
+async function renderInventory() { renderInventoryItems(); renderInventoryStats(); }
+
+async function renderInventoryStats() {
+  const items = await dbGetAll('inventory');
+  if(document.getElementById('inv-total')) document.getElementById('inv-total').textContent = items.length;
+  if(document.getElementById('inv-available')) document.getElementById('inv-available').textContent = items.filter(i => i.status === 'Available').length;
+  if(document.getElementById('inv-low')) document.getElementById('inv-low').textContent = items.filter(i => i.status === 'Low Stock').length;
+  if(document.getElementById('inv-out')) document.getElementById('inv-out').textContent = items.filter(i => i.status === 'Out of Stock').length;
+  const critical = items.filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock');
+  const banner = document.getElementById('stock-alert-banner');
+  if (banner) { if (critical.length > 0) { banner.style.display = 'flex'; document.getElementById('stock-alert-text').textContent = `${critical.length} item(s) need restocking.`; } else banner.style.display = 'none'; }
+}
+
+async function renderInventoryItems() {
+  const items = await dbGetAll('inventory');
+  const q = (document.getElementById('inv-search')?.value || '').toLowerCase();
+  const cf = document.getElementById('inv-cat-filter')?.value || '';
+  const filtered = items.filter(i => (!cf || i.category === cf) && (!q || `${i.name} ${i.itemCode} ${i.supplier||''}`.toLowerCase().includes(q)));
+  document.getElementById('inventory-tbody').innerHTML = filtered.map(i => `<tr><td class="text-mono text-accent">${i.itemCode}</td><td style="color:var(--text)">${i.name}</td><td><span class="badge ${catBadge(i.category)}">${i.category}</span></td><td style="color:${i.quantity<=i.minQuantity?'var(--red)':'var(--text)'};font-weight:${i.quantity<=i.minQuantity?600:400}">${i.quantity}</td><td>${i.unit}</td><td>${i.minQuantity}</td><td>KSh ${parseFloat(i.unitCost||0).toLocaleString()}</td><td>${i.location||'-'}</td><td>${statusBadge(i.status)}</td><td><div class="inventory-actions">${renderViewAction('inv_item',i.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('inv_item',${i.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('inventory_items',${i.id},'${i.name.replace(/'/g,'')}')">Del</button></div></td></tr>`).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:40px">No items found</td></tr>`;
+}
+
+async function renderTransactions() {
+  const txns = await dbGetAll('inventory_transactions');
+  const q = (document.getElementById('txn-search')?.value || '').toLowerCase();
+  const filtered = txns.filter(t => !q || `${t.itemName} ${t.txnId} ${t.issuedTo||''}`.toLowerCase().includes(q));
+  document.getElementById('transactions-tbody').innerHTML = filtered.map(t => `<tr><td class="text-mono text-accent">${t.txnId}</td><td style="color:var(--text)">${t.itemName}</td><td><span class="badge ${txnBadge(t.type)}">${t.type}</span></td><td>${t.quantity}</td><td>${t.balanceAfter !== null ? t.balanceAfter : '-'}</td><td>${t.issuedTo||'-'}${t.purpose?' - '+t.purpose:''}</td><td>${t.authorizedBy||'-'}</td><td>${fmtDateTime(t.txnDate||t.created_at)}</td><td>${renderViewAction('inv_txn',t.id)}</td></tr>`).join('') || `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px">No transactions</td></tr>`;
+}
+
+async function renderInventoryLowStock() {
+  const items = await dbGetAll('inventory');
+  const critical = items.filter(i => i.status === 'Low Stock' || i.status === 'Out of Stock');
+  document.getElementById('lowstock-tbody').innerHTML = critical.map(i => `<tr><td class="text-mono text-accent">${i.itemCode}</td><td style="color:var(--text)">${i.name}</td><td><span class="badge ${catBadge(i.category)}">${i.category}</span></td><td style="color:var(--red);font-weight:600">${i.quantity}</td><td>${i.minQuantity}</td><td>${i.supplier||'-'}</td><td>${statusBadge(i.status)}</td><td><button class="btn btn-warning btn-sm" onclick="openModal('inv_txn')">Restock</button></td></tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--green);padding:40px">&#10003; All items sufficiently stocked</td></tr>`;
+}
+
+// -- RENDER: Rehabilitation ------------------------------------
+async function renderRehab() { renderRehabPrograms(); renderRehabStats(); }
+
+async function renderRehabStats() {
+  const [progs, enrollments] = await Promise.all([dbGetAll('rehab_programs'), dbGetAll('rehab_enrollments')]);
+  if(document.getElementById('rehab-prog-count')) document.getElementById('rehab-prog-count').textContent = progs.filter(p=>p.status==='Active').length;
+  if(document.getElementById('rehab-enrolled-count')) document.getElementById('rehab-enrolled-count').textContent = enrollments.filter(e=>e.status==='Active').length;
+  if(document.getElementById('rehab-complete-count')) document.getElementById('rehab-complete-count').textContent = enrollments.filter(e=>e.status==='Completed').length;
+}
+
+async function renderRehabPrograms() {
+  const progs = await dbGetAll('rehab_programs');
+  const q = (document.getElementById('rehab-prog-search')?.value || '').toLowerCase();
+  const tf = document.getElementById('rehab-type-filter')?.value || '';
+  const filtered = progs.filter(p => (!tf || p.type === tf) && (!q || `${p.name} ${p.programId} ${p.facilitator||''}`.toLowerCase().includes(q)));
+  document.getElementById('rehab-programs-tbody').innerHTML = filtered.map(p => `<tr><td class="text-mono text-accent">${p.programId}</td><td style="color:var(--text)">${p.name}</td><td><span class="badge ${rehabBadge(p.type)}">${p.type}</span></td><td>${p.facilitator||'-'}</td><td style="font-size:12px">${p.schedule||'-'}</td><td>${p.capacity}</td><td><span style="color:${p.enrolled>=p.capacity?'var(--red)':'var(--green)'}">${p.enrolled||0}</span>/${p.capacity}</td><td>${statusBadge(p.status)}</td><td style="white-space:nowrap">${renderViewAction('rehab_prog',p.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('rehab_prog',${p.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('rehab_programs',${p.id},'${p.name.replace(/'/g,'')}')">Del</button></td></tr>`).join('') || `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:40px">No programs found</td></tr>`;
+}
+
+async function renderEnrollments() {
+  const enrollments = await dbGetAll('rehab_enrollments');
+  const q = (document.getElementById('enroll-search')?.value || '').toLowerCase();
+  const filtered = enrollments.filter(e => !q || `${e.prisonerName} ${e.programName} ${e.enrollId}`.toLowerCase().includes(q));
+  document.getElementById('enrollments-tbody').innerHTML = filtered.map(e => `<tr><td class="text-mono text-accent">${e.enrollId}</td><td style="color:var(--text)">${e.prisonerName}</td><td>${e.programName}</td><td>${fmtDate(e.enrollDate)}</td><td style="min-width:120px"><div class="progress-bar"><div class="progress-fill" style="width:${e.progress||0}%"></div></div><span style="font-size:11px;color:var(--text3)">${e.progress||0}%</span></td><td>${statusBadge(e.status)}</td><td style="white-space:nowrap">${renderViewAction('rehab_enroll',e.id)} <button class="btn btn-secondary btn-sm" onclick="openModal('enrollment',${e.id})">Edit</button> <button class="btn btn-danger btn-sm" onclick="confirmDelete('rehab_enrollments',${e.id},'${e.enrollId}')">Del</button></td></tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:40px">No enrollments found</td></tr>`;
+}
+
+function renderViewAction(type, id) {
+  const handlers = {
+    prisoner: 'openPrisonerView', visit: 'openVisitationView', incident: 'openIncidentView',
+    movement: 'openMovementView', transfer: 'openTransferView', cell: 'openCellView',
+    court: 'openCourtView', report: 'openReportView', medical: 'openMedicalView',
+    shift: 'openShiftView', inv_item: 'openInvItemView', inv_txn: 'openInvTxnView',
+    rehab_prog: 'openRehabProgView', rehab_enroll: 'openRehabEnrollView',
+    staff: 'openStaffView', audit: 'openAuditView'
+  };
+  const handler = handlers[type];
+  return handler ? `<button class="btn btn-secondary btn-sm" type="button" onclick="${handler}(${Number(id)})">View</button>` : '';
+}
+
+ 
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+function showNotif(msg, type='info') {
+  const el = document.getElementById('notif');
+  el.className = `show ${type}`;
+  document.getElementById('notif-text').textContent = msg;
+  clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => el.className = '', 3500);
+}
+
+// ============================================================
+// INIT - check if session already active
+// ============================================================
+(async () => {
+  const res = await apiCall(`${AUTH_API}?action=status`);
+  if (res.success && res.data?.authenticated) {
+    currentUser = res.data;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    const initials = (currentUser.name||'AD').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('user-avatar-sidebar').textContent = initials;
+    document.getElementById('user-name-sidebar').textContent = currentUser.name;
+    document.getElementById('user-role-sidebar').textContent = currentUser.role;
+    navigate('dashboard');
+  }
+})();
+function createViewModal(id, title, closeHandler) {
+  return `<div class="modal-overlay" id="modal-${id}-view" aria-hidden="true"><div class="modal view-modal" role="dialog" aria-modal="true"><button class="modal-close" type="button" onclick="${closeHandler}()" aria-label="Close">&#x2715;</button><h2>${title}</h2><div id="${id}-view-subtitle" class="modal-subtitle"></div><div id="${id}-view-content"></div></div></div>`;
+}
+</script>
+<script>
+(() => {
+  if (typeof window.navigate === 'function') return;
+  const appScript = Array.from(document.scripts).find(script => script.textContent.includes("const API_BASE = 'api/data.php'"));
+  if (!appScript) return;
+  try { (0, eval)(appScript.textContent); } catch (error) { console.error('Application bootstrap failed:', error); }
+})();
+</script>
+<script>
+if (typeof window.prisonerProfileField !== 'function') {
+  window.prisonerProfileField = (label, value) => `<div class="prisoner-profile-field"><span class="prisoner-profile-label">${label}</span><div class="prisoner-profile-value">${value || '—'}</div></div>`;
+}
+</script>
+<script><?php readfile(__DIR__ . '/view_functions.js'); ?></script>
+<script>
+function createViewModal(id, title, closeHandler) {
+  return `<div class="modal-overlay" id="modal-${id}-view" aria-hidden="true"><div class="modal view-modal" role="dialog" aria-modal="true"><button class="modal-close" type="button" onclick="${closeHandler}()" aria-label="Close">&#x2715;</button><div class="view-modal-header"><div class="view-modal-title-row"><h2 id="${id}-view-title">${title}</h2><span id="${id}-view-status" class="view-modal-status"></span></div><div id="${id}-view-subtitle" class="modal-subtitle"></div></div><div id="${id}-view-content"></div></div></div>`;
+}
+async function openLegacyView(type, id, store, label, display) {
+  const item = (await dbGetAll(store)).find(record => record.id == id);
+  if (!item) return showNotif(`${label} not found`, 'error');
+
+  const titleEl = document.getElementById(`${type}-view-title`);
+  const subtitleEl = document.getElementById(`${type}-view-subtitle`);
+  const statusEl = document.getElementById(`${type}-view-status`);
+
+  if (titleEl) titleEl.textContent = display(item) || `${label} record`;
+  if (subtitleEl) subtitleEl.textContent = item.prisonerId || item.visitId || item.incidentId || item.reportId || item.recordId || item.cellNumber || item.caseNumber || item.id || '—';
+  if (statusEl) statusEl.innerHTML = item.status ? statusBadge(item.status) : '';
+
+  const fields = Object.entries(item).filter(([key]) => !['id', 'photo', 'created_at', 'updated_at'].includes(key));
+  document.getElementById(`${type}-view-content`).innerHTML = `<div class="view-fields">${fields.map(([key, value]) => prisonerProfileField(key.replace(/_/g, ' '), value || '—')).join('')}</div>`;
+  const modal = document.getElementById(`modal-${type}-view`);
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+}
+function closeLegacyView(type) {
+  const modal = document.getElementById(`modal-${type}-view`);
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+}
+function openPrisonerView(id) {
+  const modal = document.getElementById('modal-prisoner-view');
+  const titleEl = document.getElementById('prisoner-view-title');
+  const subtitleEl = document.getElementById('prisoner-view-subtitle');
+  const statusEl = document.getElementById('prisoner-view-status');
+  const contentEl = document.getElementById('prisoner-view-content');
+
+  progressState.prisonerId = Number(id);
+  dbGetAll('prisoners').then(prisoners => {
+    const item = prisoners.find(record => record.id == id);
+    if (!item) return showNotif('Prisoner not found', 'error');
+
+    const fullName = [item.firstname, item.middlename, item.lastname].filter(Boolean).join(' ') || 'Prisoner';
+    const statusBadgeMarkup = statusBadge(item.status || 'Active');
+
+    if (titleEl) titleEl.textContent = fullName.toUpperCase();
+    if (subtitleEl) subtitleEl.textContent = item.prisonerId || '—';
+    if (statusEl) statusEl.innerHTML = statusBadgeMarkup;
+
+    const summaryCards = [
+      { label: 'Full Name', value: fullName },
+      { label: 'Prisoner ID', value: item.prisonerId || '—' },
+      { label: 'Status', value: statusBadgeMarkup },
+      { label: 'Facility', value: item.facility || 'Kiambu Maximum Prison' }
+    ];
+
+    const personalFields = [
+      ['Date of Birth', item.dob ? new Date(item.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'],
+      ['Gender', item.gender || '—'],
+      ['Nationality', item.nationality || '—'],
+      ['Address', item.address || '—'],
+      ['National ID / Passport', item.natid || 'Not provided'],
+      ['Emergency Contact', item.emname ? `${item.emname}${item.emphone ? ` (${item.emphone})` : ''}` : '—']
+    ];
+
+    const incarcerationFields = [
+      ['Prisoner Type', item.prisonerType || 'Remand / Pre-trial prisoners'],
+      ['Admission Date', item.admdate ? new Date(item.admdate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'],
+      ['Cell Assignment', item.cell || '—'],
+      ['Sentence (months)', item.sentence ? `${item.sentence} months` : '—'],
+      ['Expected Release Date', item.release ? new Date(item.release).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'],
+      ['Security Level', item.security || 'Minimum']
+    ];
+
+    const photoMarkup = item.photo ? `<div class="photo-preview-box" style="width:110px;height:110px;margin-right:12px;display:block"><img src="${item.photo}" alt="Prisoner photo" style="display:block"></div>` : `<div class="photo-preview-box placeholder" style="width:110px;height:110px;margin-right:12px;display:block"></div>`;
+
+    contentEl.innerHTML = `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+        <button class="btn btn-primary btn-sm" onclick="openProgressModal(${Number(id)})">+ Add Progress Assessment</button>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:18px;">
+        ${photoMarkup}
+        <div style="flex:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;">
+          ${summaryCards.slice(0,3).map(card => `
+            <div class="prisoner-summary-card">
+              <span class="prisoner-summary-label">${card.label}</span>
+              <div class="prisoner-summary-value">${card.value}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="prisoner-summary-grid" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:0;">
+        ${summaryCards.slice(3).map(card => `
+          <div class="prisoner-summary-card">
+            <span class="prisoner-summary-label">${card.label}</span>
+            <div class="prisoner-summary-value">${card.value}</div>
+          </div>
+        `).join('')}
+      </div>
+      <section class="prisoner-profile-section">
+        <div class="prisoner-profile-section-title">Personal Information</div>
+        <div class="prisoner-profile-grid">
+          ${personalFields.map(([label, value]) => prisonerProfileField(label, value)).join('')}
+        </div>
+      </section>
+      <section class="prisoner-profile-section">
+        <div class="prisoner-profile-section-title">Incarceration Details</div>
+        <div class="prisoner-profile-grid">
+          ${incarcerationFields.map(([label, value]) => prisonerProfileField(label, value)).join('')}
+        </div>
+      </section>
+      ${item.notes ? `<section class="prisoner-profile-section"><div class="prisoner-profile-section-title">Case Information</div><div class="prisoner-profile-related">${item.notes}</div></section>` : ''}
+      <section class="prisoner-profile-section">
+        <div class="prisoner-profile-section-title">Progress / Improvement Timeline</div>
+        <div id="prisoner-progress-content" class="prisoner-profile-related">Loading progress history...</div>
+      </section>
+    `;
+
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    loadPrisonerProgress(id);
+  }).catch(() => showNotif('Unable to load prisoner details', 'error'));
+}
+function progressEscape(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+}
+async function loadPrisonerProgress(prisonerId) {
+  const target = document.getElementById('prisoner-progress-content');
+  if (!target) return;
+  try {
+    const response = await apiCall(`api/progress.php?action=list&prisoner_id=${encodeURIComponent(prisonerId)}`);
+    if (!response.success) throw new Error(response.msg || 'Unable to load progress');
+    const records = response.data || [];
+    if (!records.length) { target.innerHTML = `<div class="empty-state" style="padding:28px 12px;"><strong>No Progress Assessments Yet</strong><p style="margin-top:6px;">There are currently no rehabilitation assessments recorded.</p><button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="openProgressModal(${Number(prisonerId)})">+ Add First Assessment</button></div>`; return; }
+    const scores = records.map(record => Number(record.current_score)).filter(Number.isFinite);
+    const average = scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
+    const deltas = records.map(progressDelta).filter(Number.isFinite);
+    const improvement = deltas.length ? deltas.reduce((sum, delta) => sum + delta, 0) : 0;
+    const nextReview = records.filter(record => record.next_review_date).sort((a, b) => a.next_review_date.localeCompare(b.next_review_date))[0]?.next_review_date;
+    const overall = scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
+    const signedImprovement = `${improvement >= 0 ? '+' : ''}${improvement}`;
+    target.innerHTML = `<div class="progress-shell">
+      <div class="progress-summary">
+        ${[['Total Assessments', records.length], ['Average Score', `${average}%`], ['Overall Improvement', `${signedImprovement} pts`], ['Next Review', nextReview ? fmtDate(nextReview) : 'Not set']].map(([label, value]) => `<div class="progress-stat"><span class="progress-stat-label">${label}</span><div class="progress-stat-value">${progressEscape(value)}</div></div>`).join('')}
+      </div>
+      <div class="progress-overall"><strong>Overall Rehabilitation Progress</strong><div class="progress-bar"><div class="progress-fill" style="width:${Math.min(100, Math.max(0, overall))}%"></div></div><span class="text-mono">${overall}%</span></div>
+      <div class="progress-history">${records.map(progressRecordMarkup).join('')}</div>
+    </div>`;
+  } catch (error) {
+    target.textContent = error.message || 'Unable to load progress history.';
+  }
+}
+function progressDelta(record) {
+  const previous = Number(record.previous_score);
+  const current = Number(record.current_score);
+  return Number.isFinite(previous) && Number.isFinite(current) ? Math.round((current - previous) * 100) / 100 : NaN;
+}
+function progressDeltaMarkup(delta) {
+  if (!Number.isFinite(delta)) return '<span class="progress-delta flat">No score change</span>';
+  const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+  return `<span class="progress-delta ${cls}">${delta >= 0 ? '+' : ''}${delta} pts</span>`;
+}
+function progressRecordMarkup(record) {
+  const previous = record.previous_score === null ? '-' : `${record.previous_score}%`;
+  const current = record.current_score === null ? '-' : `${record.current_score}%`;
+  return `<article class="progress-record">
+    <div class="progress-record-head"><strong>${progressEscape(record.activity)}</strong><span class="badge badge-blue">${progressEscape(record.category)}</span><span class="text-mono">${progressEscape(fmtDate(record.assessment_date))}</span></div>
+    <div class="progress-record-score"><span>Previous <b class="progress-score">${progressEscape(previous)}</b></span><span>Current <b class="progress-score">${progressEscape(current)}</b></span>${progressDeltaMarkup(progressDelta(record))}</div>
+    ${record.comments ? `<div class="progress-record-notes">${progressEscape(record.comments)}</div>` : ''}
+    ${record.recommendations ? `<div class="progress-record-notes"><b>Next steps:</b> ${progressEscape(record.recommendations)}</div>` : ''}
+    <div class="progress-record-meta"><span>Recorded by ${progressEscape(record.created_by_name || 'Staff')}</span><span>${record.next_review_date ? `Next review: ${progressEscape(fmtDate(record.next_review_date))}` : 'No review date'}</span></div>
+    <div class="progress-actions"><button class="btn btn-secondary btn-sm" onclick="openProgressView(${Number(record.id)})">View</button><button class="btn btn-primary btn-sm" onclick="openProgressEdit(${Number(record.id)},${Number(record.prisoner_id)})">Edit</button></div>
+  </article>`;
+}
+function localDate() { const now = new Date(); return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`; }
+function resetProgressForm() {
+  ['progress-category','progress-activity','progress-previous','progress-current','progress-change','progress-comments','progress-recommendations','progress-next-review'].forEach(id => { const element = document.getElementById(id); if (element) element.value = ''; });
+  document.getElementById('progress-date').value = localDate();
+  document.getElementById('progress-modal-title').textContent = 'New Progress Assessment';
+  progressState = { mode: 'create', prisonerId: progressState.prisonerId, assessmentId: null, currentAssessment: null };
+}
+async function setProgressPreviousScore() {
+  if (progressState.mode !== 'create') return;
+  if (!progressState.prisonerId) return;
+  const category = document.getElementById('progress-category').value;
+  const response = await apiCall(`api/progress.php?action=list&prisoner_id=${encodeURIComponent(progressState.prisonerId)}`);
+  const latest = (response.data || []).find(record => record.category === category && record.current_score !== null);
+  document.getElementById('progress-previous').value = latest ? latest.current_score : '';
+}
+function updateProgressChange() {
+  const previous = Number(document.getElementById('progress-previous').value);
+  const current = Number(document.getElementById('progress-current').value);
+  document.getElementById('progress-change').value = Number.isFinite(previous) && Number.isFinite(current) ? `${current - previous >= 0 ? '+' : ''}${Math.round((current - previous) * 100) / 100} points` : '';
+}
+async function openProgressModal(prisonerId) {
+  progressState.prisonerId = Number(prisonerId);
+  resetProgressForm();
+  document.getElementById('progress-prisoner-label').textContent = `Prisoner record #${prisonerId}`;
+  document.getElementById('modal-progress').dataset.prisonerId = prisonerId;
+  document.getElementById('modal-progress').classList.add('open');
+  await setProgressPreviousScore();
+}
+async function openProgressEdit(id, prisonerId) {
+  const response = await apiCall(`api/progress.php?action=list&prisoner_id=${encodeURIComponent(prisonerId)}`);
+  const record = (response.data || []).find(item => Number(item.id) === Number(id));
+  if (!record) return showNotif('Assessment not found', 'error');
+  progressState = { mode: 'edit', prisonerId: Number(prisonerId), assessmentId: Number(id), currentAssessment: record };
+  document.getElementById('modal-progress').dataset.prisonerId = prisonerId;
+  document.getElementById('progress-prisoner-label').textContent = `Prisoner record #${prisonerId}`;
+  document.getElementById('progress-modal-title').textContent = 'Edit Progress Assessment';
+  [['progress-date','assessment_date'],['progress-category','category'],['progress-activity','activity'],['progress-previous','previous_score'],['progress-current','current_score'],['progress-change','change_summary'],['progress-comments','comments'],['progress-recommendations','recommendations'],['progress-next-review','next_review_date']].forEach(([field, key]) => { document.getElementById(field).value = record[key] ?? ''; });
+  document.getElementById('modal-progress').classList.add('open');
+}
+async function openProgressView(id) {
+  const response = await apiCall(`api/progress.php?action=list&prisoner_id=${encodeURIComponent(progressState.prisonerId || document.getElementById('modal-progress').dataset.prisonerId || 0)}`);
+  const record = (response.data || []).find(item => Number(item.id) === Number(id));
+  if (!record) return showNotif('Assessment not found', 'error');
+  document.getElementById('progress-view-title').textContent = record.activity || 'Progress Assessment';
+  document.getElementById('progress-view-subtitle').textContent = `${record.category} | ${fmtDate(record.assessment_date)}`;
+  document.getElementById('progress-view-content').innerHTML = `<div class="view-fields">${[['Previous Score', record.previous_score === null ? '-' : `${record.previous_score}%`],['Current Score', record.current_score === null ? '-' : `${record.current_score}%`],['Improvement', progressDelta(record)],['Notes', record.comments || '-'],['Next Steps', record.recommendations || '-'],['Next Review Date', record.next_review_date ? fmtDate(record.next_review_date) : '-'],['Assessed By', record.created_by_name || 'Staff'],['Created At', record.created_at ? fmtDateTime(record.created_at) : '-'],['Updated At', record.updated_at ? fmtDateTime(record.updated_at) : '-']].map(([label, value]) => prisonerProfileField(label, progressEscape(value))).join('')}</div>`;
+  document.getElementById('modal-progress-view').classList.add('open');
+}
+function closeProgressView() { document.getElementById('modal-progress-view').classList.remove('open'); }
+function closeProgressModal() { document.getElementById('modal-progress').classList.remove('open'); progressState = { mode: 'create', prisonerId: null, assessmentId: null, currentAssessment: null }; }
+async function saveProgressRecord() {
+  const modal = document.getElementById('modal-progress');
+  const activity = document.getElementById('progress-activity').value.trim();
+  const current = document.getElementById('progress-current').value;
+  if (!document.getElementById('progress-date').value || !document.getElementById('progress-category').value || !activity || current === '') return showNotif('Assessment type, date, activity, and current score are required', 'error');
+  const action = progressState.mode === 'edit' ? 'update' : 'create';
+  const response = await apiCall('api/progress.php', { action, record: {
+    id: progressState.mode === 'edit' ? progressState.assessmentId : undefined,
+    prisoner_id: Number(modal.dataset.prisonerId), assessment_date: document.getElementById('progress-date').value,
+    category: document.getElementById('progress-category').value, activity,
+    previous_score: document.getElementById('progress-previous').value, current_score: current,
+    change_summary: document.getElementById('progress-change').value, comments: document.getElementById('progress-comments').value,
+    recommendations: document.getElementById('progress-recommendations').value, next_review_date: document.getElementById('progress-next-review').value
+  }});
+  if (!response.success) return showNotif(response.msg || 'Unable to save progress', 'error');
+  const prisonerId = Number(modal.dataset.prisonerId);
+  closeProgressModal();
+  await loadPrisonerProgress(prisonerId);
+  showNotif(action === 'create' ? 'Progress assessment recorded successfully.' : 'Progress assessment updated successfully.', 'success');
+}
+function reportValue(value, fallback = 'N/A') {
+  return value === null || value === undefined || String(value).trim() === '' ? fallback : progressEscape(value);
+}
+function reportField(label, value, fallback = 'N/A') {
+  return `<div class="report-field"><span class="report-field-label">${progressEscape(label)}</span><div class="report-field-value">${reportValue(value, fallback)}</div></div>`;
+}
+function reportStyles() {
+  return document.querySelector('style').textContent;
+}
+function prisonerReportMarkup(data) {
+  const prisoner = data.prisoner || {};
+  const assessments = data.assessments || [];
+  const scores = assessments.map(record => Number(record.current_score)).filter(Number.isFinite);
+  const average = scores.length ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length) : 0;
+  const deltas = assessments.map(progressDelta).filter(Number.isFinite);
+  const improvement = deltas.length ? deltas.reduce((sum, delta) => sum + delta, 0) : 0;
+  const nextReview = assessments.filter(record => record.next_review_date).sort((a, b) => a.next_review_date.localeCompare(b.next_review_date))[0]?.next_review_date;
+  const fullName = [prisoner.firstname, prisoner.middlename, prisoner.lastname].filter(Boolean).join(' ');
+  const photo = prisoner.photo_url || prisoner.photo;
+  return `<article class="report-document">
+    <header class="report-header"><div><div class="report-brand">INMATE INFO PLUS</div><div class="report-institution">PRISON MANAGEMENT INFORMATION SYSTEM</div></div><div><div class="report-title">INDIVIDUAL PRISONER REPORT</div><div class="report-meta">Prisoner ID: ${reportValue(prisoner.prisonerId)}<br>Generated: ${reportValue(fmtDate(localDate()))}</div></div></header>
+    <section class="report-identity"><div><div class="report-name">${reportValue(fullName)}</div><div class="report-id">${reportValue(prisoner.prisonerId)}</div><div class="report-grid" style="margin-top:10px;">${reportField('Prisoner Type', prisoner.prisonerType)}</div></div><div class="report-photo">${photo ? `<img src="${progressEscape(photo)}" alt="Prisoner photograph" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none">NO PHOTOGRAPH AVAILABLE</span>` : '<span>NO PHOTOGRAPH AVAILABLE</span>'}</div></section>
+    <section class="report-section"><h3>Personal Information</h3><div class="report-grid">${reportField('Full Name', fullName)}${reportField('Date of Birth', prisoner.dob ? fmtDate(prisoner.dob) : '')}${reportField('Gender', prisoner.gender)}${reportField('National ID / Passport', prisoner.natid, 'Not Provided')}${reportField('Nationality', prisoner.nationality)}${reportField('Address', prisoner.address)}</div></section>
+    <section class="report-section"><h3>Emergency Contact</h3><div class="report-grid">${reportField('Emergency Contact Name', prisoner.emname, 'Not Provided')}${reportField('Emergency Contact Phone', prisoner.emphone, 'Not Provided')}</div></section>
+    <section class="report-section"><h3>Case Information</h3><div class="report-grid">${reportField('Case Number', prisoner.caseNumber, 'Not Provided')}${reportField('Primary Offense', prisoner.offense, 'Not Provided')}</div></section>
+    <section class="report-section"><h3>Incarceration Details</h3><div class="report-grid">${reportField('Admission Date', prisoner.admdate ? fmtDate(prisoner.admdate) : '')}${reportField('Cell Assignment', prisoner.cell, 'Unassigned')}${reportField('Sentence (Months)', prisoner.sentence ? `${prisoner.sentence} Months` : 'Not Provided')}${reportField('Expected Release Date', prisoner.release ? fmtDate(prisoner.release) : '')}${reportField('Security Level', prisoner.security)}${reportField('Status', prisoner.status)}</div></section>
+    <section class="report-section"><h3>Notes / Additional Information</h3><div class="report-notes">${reportValue(prisoner.notes, 'No additional notes provided.')}</div></section>
+    <section class="report-section"><h3>Rehabilitation &amp; Progress History</h3>${assessments.length ? `<div class="report-summary">${[['Total Assessments', assessments.length],['Average Score', `${average}%`],['Overall Improvement', `${improvement >= 0 ? '+' : ''}${improvement} pts`],['Next Review', nextReview ? fmtDate(nextReview) : 'Not set']].map(([label, value]) => `<div class="report-summary-card"><strong>${reportValue(value)}</strong><span>${progressEscape(label)}</span></div>`).join('')}</div>${assessments.map(record => `<div class="report-assessment"><div class="report-assessment-head"><span>${reportValue(record.activity)}</span><span>${reportValue(record.category)} | ${reportValue(fmtDate(record.assessment_date))}</span></div><div class="report-assessment-scores">Previous: <b>${reportValue(record.previous_score === null ? '' : `${record.previous_score}%`)}</b> &nbsp; Current: <b>${reportValue(record.current_score === null ? '' : `${record.current_score}%`)}</b> &nbsp; ${progressDeltaMarkup(progressDelta(record))}</div>${record.comments ? `<div class="report-assessment-text">Notes: ${reportValue(record.comments)}</div>` : ''}${record.recommendations ? `<div class="report-assessment-text">Next steps: ${reportValue(record.recommendations)}</div>` : ''}<div class="report-assessment-text">Recorded by: ${reportValue(record.created_by_name, 'Staff')}${record.next_review_date ? ` | Next review: ${reportValue(fmtDate(record.next_review_date))}` : ''}</div></div>`).join('')}` : '<div class="report-notes">No rehabilitation assessments recorded.</div>'}</section>
+    <footer class="report-footer"><span>CONFIDENTIAL | Individual Prisoner Report</span><span>Page <span class="report-page-number"></span></span></footer>
+  </article>`;
+}
+async function openPrisonerReport(id) {
+  if (!Number.isInteger(Number(id)) || Number(id) <= 0) return showNotif('Invalid prisoner selected', 'error');
+  try {
+    const response = await apiCall(`api/prisoner_report.php?prisoner_id=${encodeURIComponent(Number(id))}`);
+    if (!response.success) return showNotif(response.msg || 'Unable to load prisoner report', 'error');
+    const report = document.getElementById('prisoner-report-content');
+    report.innerHTML = prisonerReportMarkup(response.data);
+    const modal = document.getElementById('modal-prisoner-report');
+    modal.classList.add('open');
+    modal.setAttribute('aria-hidden', 'false');
+    modal.dataset.prisonerId = Number(id);
+    modal.dataset.filename = `Individual_Prisoner_Report_${[prisonerReportValue(response.data.prisoner.prisonerId), response.data.prisoner.firstname, response.data.prisoner.middlename, response.data.prisoner.lastname].filter(Boolean).join('_')}`;
+  } catch (error) { showNotif('Unable to load prisoner report', 'error'); }
+}
+function prisonerReportValue(value) {
+  return String(value || '').trim().replace(/[^a-z0-9]+/gi, '_').replace(/^_+|_+$/g, '').toUpperCase();
+}
+function closePrisonerReport() {
+  const modal = document.getElementById('modal-prisoner-report');
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+}
+function printPrisonerReport() {
+  const modal = document.getElementById('modal-prisoner-report');
+  const reportContent = document.getElementById('prisoner-report-content');
+  if (!modal || !reportContent || !reportContent.innerHTML.trim()) return showNotif('Report preview is not ready', 'error');
+  let printRoot = document.getElementById('prisoner-report-print-root');
+  if (!printRoot) { printRoot = document.createElement('div'); printRoot.id = 'prisoner-report-print-root'; document.body.appendChild(printRoot); }
+  printRoot.innerHTML = reportContent.innerHTML;
+  const previousTitle = document.title;
+  document.title = modal.dataset.filename || 'Individual_Prisoner_Report';
+  document.body.classList.add('printing-report');
+  const cleanupPrint = () => { document.body.classList.remove('printing-report'); printRoot.innerHTML = ''; };
+  window.addEventListener('afterprint', cleanupPrint, { once: true });
+  window.print();
+  window.setTimeout(() => { document.title = previousTitle; cleanupPrint(); }, 1500);
+}
+function openVisitationView(id) { return openLegacyView('visit', id, 'visitations', 'Visitation', item => item.visitId || 'Visitation record'); }
+function openIncidentView(id) { return openLegacyView('incident', id, 'incidents', 'Incident', item => item.incidentId || 'Incident record'); }
+function closePrisonerView() { closeLegacyView('prisoner'); }
+function closeVisitationView() { closeLegacyView('visit'); }
+function closeIncidentView() { closeLegacyView('incident'); }
+document.body.insertAdjacentHTML('beforeend', [
+  createViewModal('prisoner', 'View Prisoner', 'closePrisonerView'),
+  createViewModal('visit', 'View Visitation', 'closeVisitationView'),
+  createViewModal('incident', 'View Incident', 'closeIncidentView'),
+  createViewModal('movement', 'View Movement Log', 'closeMovementView'),
+  createViewModal('transfer', 'View Transfer Request', 'closeTransferView'),
+  createViewModal('cell', 'View Cell', 'closeCellView'),
+  createViewModal('court', 'View Court Case', 'closeCourtView'),
+  createViewModal('report', 'View Report', 'closeReportView'),
+  createViewModal('medical', 'View Medical Record', 'closeMedicalView'),
+  createViewModal('shift', 'View Shift', 'closeShiftView'),
+  createViewModal('inv-item', 'View Inventory Item', 'closeInvItemView'),
+  createViewModal('inv-txn', 'View Inventory Transaction', 'closeInvTxnView'),
+  createViewModal('rehab-prog', 'View Rehabilitation Program', 'closeRehabProgView'),
+  createViewModal('rehab-enroll', 'View Rehabilitation Enrollment', 'closeRehabEnrollView'),
+  createViewModal('staff', 'View Staff Member', 'closeStaffView'),
+  createViewModal('audit', 'View Audit Entry', 'closeAuditView')
+].join(''));
+</script>
+</body>
+</html>
+

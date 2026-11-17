@@ -1,0 +1,853 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureCell v3 â€” Prison Management System</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+  :root {
+    --bg:#ffffff;--bg2:#f5f5f5;--bg3:#eeeeee;--bg4:#e8e8e8;
+    --border:#d4d4d4;--border2:#c0c0c0;--text:#1a1a1a;--text2:#555555;--text3:#888888;
+    --accent:#4f8ef7;--accent2:#2563d4;--green:#22c55e;--red:#ef4444;--amber:#f59e0b;
+    --purple:#a78bfa;--teal:#14b8a6;--font:'IBM Plex Sans',sans-serif;--mono:'IBM Plex Mono',monospace;
+    --r:6px;--r2:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;font-size:14px;}
+  #auth-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;}
+  .auth-card{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:40px;width:380px;box-shadow:0 4px 20px rgba(0,0,0,0.08);}
+  .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+  .auth-logo-icon{width:36px;height:36px;background:var(--accent);border-radius:var(--r);display:flex;align-items:center;justify-content:center;}
+  .auth-logo-icon svg{width:20px;height:20px;fill:white;}
+  .auth-logo-text{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--text);}
+  .auth-logo-sub{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;font-family:var(--mono);}
+  .auth-title{font-size:22px;font-weight:600;margin-bottom:6px;}
+  .auth-sub{font-size:13px;color:var(--text2);margin-bottom:28px;}
+  .form-group{margin-bottom:16px;}
+  .form-label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);}
+  .form-input,.form-select,.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);padding:9px 12px;font-size:14px;font-family:var(--font);outline:none;transition:border-color .2s;}
+  .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);}
+  .form-select{appearance:none;cursor:pointer;}
+  .form-textarea{resize:vertical;min-height:80px;}
+  .photo-preview{width:100px;height:100px;object-fit:cover;border:1px solid var(--border2);border-radius:var(--r);margin-top:8px;display:none;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:1px solid transparent;border-radius:var(--r);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:all .15s;}
+  .btn-primary{background:var(--accent);color:white;border-color:var(--accent2);}
+  .btn-primary:hover{background:var(--accent2);}
+  .btn-secondary{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+  .btn-secondary:hover{background:var(--bg4);}
+  .btn-danger{background:#3f1515;color:var(--red);border-color:#7a2020;}
+  .btn-danger:hover{background:#5a1a1a;}
+  .btn-success{background:#0f3320;color:var(--green);border-color:#1a5a30;}
+  .btn-sm{padding:5px 12px;font-size:12px;}
+  .btn-full{width:100%;justify-content:center;}
+  #app{display:flex;height:100vh;overflow:hidden;}
+  #sidebar{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;}
+  .sidebar-header{padding:18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+  .sidebar-logo{width:28px;height:28px;background:var(--accent);border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sidebar-logo svg{width:16px;height:16px;fill:white;}
+  .sidebar-title{font-family:var(--mono);font-size:13px;font-weight:600;}
+  .sidebar-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+  .nav-section{margin-bottom:20px;}
+  .nav-section-title{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;padding:4px 8px;margin-bottom:4px;font-family:var(--mono);}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:13px;transition:all .15s;margin-bottom:2px;border:1px solid transparent;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bg4);color:var(--accent);border-color:var(--border2);}
+  .nav-item svg{width:15px;height:15px;flex-shrink:0;}
+  .nav-badge{margin-left:auto;background:var(--accent);color:white;font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--mono);}
+  .sidebar-footer{padding:12px;border-top:1px solid var(--border);}
+  .user-card{display:flex;align-items:center;gap:10px;}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--accent);font-family:var(--mono);flex-shrink:0;}
+  .user-name{font-size:13px;font-weight:500;}
+  .user-role{font-size:11px;color:var(--text3);}
+  .btn-logout{margin-left:auto;background:none;border:none;color:var(--text3);cursor:pointer;padding:4px;border-radius:4px;}
+  .btn-logout:hover{color:var(--red);}
+  #main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;height:56px;display:flex;align-items:center;gap:16px;flex-shrink:0;}
+  .topbar-title{font-size:16px;font-weight:600;}
+  .topbar-sub{font-size:12px;color:var(--text3);}
+  .topbar-actions{margin-left:auto;display:flex;gap:8px;align-items:center;}
+  .content{flex:1;overflow-y:auto;padding:24px;}
+  .page{display:none;}
+  .page.active{display:block;}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px;}
+  .stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;font-family:var(--mono);}
+  .stat-value{font-size:28px;font-weight:600;font-family:var(--mono);}
+  .stat-sub{font-size:12px;color:var(--text2);margin-top:4px;}
+  .table-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;}
+  .table-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+  .table-title{font-size:14px;font-weight:600;}
+  .search-box{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:7px 12px;margin-left:auto;}
+  .search-box svg{width:14px;height:14px;color:var(--text3);flex-shrink:0;}
+  .search-box input{background:none;border:none;outline:none;color:var(--text);font-size:13px;width:200px;font-family:var(--font);}
+  .filter-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-left:auto;}
+  .filter-group label{font-size:12px;color:var(--text2);font-weight:500;}
+  .filter-group input[type="date"]{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--font);}
+  .filter-group{display:flex;align-items:center;gap:8px;margin-left:12px;}
+  .filter-group label{font-size:12px;color:var(--text2);font-weight:500;}
+  .filter-group input[type="date"]{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:6px 8px;color:var(--text);font-size:12px;font-family:var(--font);}
+  .btn-export{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);cursor:pointer;font-size:12px;transition:all .2s;margin-left:4px;}
+  .btn-export:hover{background:var(--accent);color:white;border-color:var(--accent);}
+  table{width:100%;border-collapse:collapse;}
+  th{padding:10px 16px;text-align:left;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-family:var(--mono);border-bottom:1px solid var(--border);background:var(--bg3);}
+  td{padding:11px 16px;font-size:13px;border-bottom:1px solid var(--border);color:var(--text2);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--bg3);color:var(--text);}
+  .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:500;font-family:var(--mono);}
+  .badge-green{background:#0f3320;color:var(--green);}
+  .badge-red{background:#3f1515;color:var(--red);}
+  .badge-amber{background:#3a2000;color:var(--amber);}
+  .badge-blue{background:#0a1f40;color:var(--accent);}
+  .badge-purple{background:#1a1030;color:var(--purple);}
+  .badge-gray{background:var(--bg4);color:var(--text2);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;z-index:500;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);width:640px;max-height:85vh;overflow-y:auto;padding:28px;position:relative;}
+  .modal-lg{width:800px;}
+  .modal-title{font-size:18px;font-weight:600;margin-bottom:6px;}
+  .modal-sub{font-size:13px;color:var(--text2);margin-bottom:24px;}
+  .modal-close{position:absolute;top:16px;right:16px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:20px;line-height:1;padding:4px 8px;border-radius:4px;}
+  .modal-close:hover{color:var(--text);background:var(--bg3);}
+  .modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:20px;border-top:1px solid var(--border);}
+  .section-divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+  .section-title-sm{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;font-family:var(--mono);}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+  .tab{padding:8px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab:hover:not(.active){color:var(--text);}
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+  .log-list{display:flex;flex-direction:column;gap:8px;}
+  .log-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;display:flex;gap:14px;align-items:flex-start;}
+  .log-icon{width:32px;height:32px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .log-text{flex:1;}
+  .log-title{font-size:13px;font-weight:500;color:var(--text);}
+  .log-meta{font-size:11px;color:var(--text3);margin-top:2px;font-family:var(--mono);}
+  .log-time{font-size:11px;color:var(--text3);font-family:var(--mono);white-space:nowrap;}
+  .alert{padding:12px 16px;border-radius:var(--r);border:1px solid;margin-bottom:16px;font-size:13px;}
+  .alert-success{background:#0f3320;border-color:#1a5a30;color:var(--green);}
+  .alert-error{background:#3f1515;border-color:#7a2020;color:var(--red);}
+  .alert-info{background:#0a1f40;border-color:#1a3a70;color:var(--accent);}
+  .report-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:20px;margin-bottom:12px;}
+  .report-title{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .report-meta{font-size:12px;color:var(--text2);margin-bottom:12px;font-family:var(--mono);}
+  .report-body{font-size:13px;color:var(--text2);line-height:1.6;}
+  .empty-state{text-align:center;padding:60px 20px;}
+  .empty-state p{font-size:13px;color:var(--text2);}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .mb16{margin-bottom:16px;}
+  .mb24{margin-bottom:24px;}
+  .flex-between{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .text-mono{font-family:var(--mono);}
+  .text-accent{color:var(--accent);}
+  #notif{position:fixed;bottom:24px;right:24px;z-index:2000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:14px 20px;font-size:13px;display:none;max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+  #notif.show{display:flex;align-items:center;gap:10px;}
+  #notif.success{border-left:3px solid var(--green);}
+  #notif.error{border-left:3px solid var(--red);}
+  #notif.info{border-left:3px solid var(--accent);}
+
+  /* â”€â”€ NEW v3 styles â”€â”€ */
+  .stats-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+  .badge-teal{background:#031a18;color:var(--teal);}
+  .badge-orange{background:#3a1500;color:#fb923c;}
+  .nav-badge.warn{background:var(--amber);color:#000;}
+  .progress-bar{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:3px;}
+  .progress-fill{height:100%;background:var(--accent);border-radius:3px;}
+  .stock-alert{background:#3a2000;border:1px solid #6a3800;border-radius:var(--r);padding:10px 16px;margin-bottom:16px;font-size:13px;color:var(--amber);display:flex;align-items:center;gap:8px;}
+  .btn-warning{background:#3a2000;color:var(--amber);border:1px solid #6a3800;}
+  .btn-warning:hover{background:#4a2a00;}
+  ::-webkit-scrollbar{width:6px;}
+  ::-webkit-scrollbar-track{background:var(--bg2);}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+  .password-field-wrapper{position:relative;display:flex;align-items:center;}
+  .password-field-wrapper .form-input{padding-right:40px;}
+  .password-toggle-btn{position:absolute;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;padding:6px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:color .2s;}
+  .password-toggle-btn:hover{color:var(--text);}
+  .password-toggle-btn svg{width:18px;height:18px;}
+</style>
+</head>
+<body>
+
+<div id="notif"><span id="notif-text"></span></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 4l6 2.67V11c0 3.91-2.56 7.56-6 8.86-3.44-1.3-6-4.95-6-8.86V7.67L12 5z"/></svg></div>
+      <div>
+        <div class="auth-logo-text">INMATE INFO PLUS</div>
+        <div class="auth-logo-sub">Kamiti Prison Mgt Sys</div>
+      </div>
+    </div>
+    <div class="auth-title">Authorized Access Only</div>
+    <div class="auth-sub">Enter your credentials to access the system</div>
+    <div id="auth-alert" style="display:none" class="alert alert-error mb16"></div>
+    <div class="form-group"><label class="form-label">Username</label><input type="text" id="login-user" class="form-input" placeholder="Enter username" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></div>
+    <div class="form-group"><label class="form-label">Password</label><div class="password-field-wrapper"><input type="password" id="login-pass" class="form-input" placeholder="Enter password" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false"><button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()" title="Show/Hide password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></button></div></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-8v2h8v14z"/></svg>
+      Sign In
+    </button>
+    <div style="margin-top:12px;font-size:11px;color:var(--text3);text-align:center">Implementing Safety </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
+      <div><div class="sidebar-title">Inmate Info</div><div style="font-size:10px;color:var(--text3)">PMS </div></div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Main</div>
+        <div class="nav-item active" onclick="navigate('dashboard')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>Dashboard</div>
+        <div class="nav-item" onclick="navigate('prisoners')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Prisoners<span class="nav-badge" id="nav-prisoner-count">0</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Operations</div>
+        <div class="nav-item" onclick="navigate('visitations')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Visitations</div>
+        <div class="nav-item" onclick="navigate('incidents')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>Incidents</div>
+        <div class="nav-item" onclick="navigate('movements')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>Log In/Out</div>
+        <div class="nav-item" onclick="navigate('cells')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Cell Management</div>
+        <div class="nav-item" onclick="navigate('shifts')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>Shift Management</div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Records</div>
+        <div class="nav-item" onclick="navigate('court')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l4 2.18V17h2v-4.82L9 13.4V17c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2v-3.6l2-1.09V11h2V9.18L12 3zm5 8.5l-5 2.73-5-2.73v-1.8L12 12.5l5-2.77v1.77z"/></svg>Court Cases</div>
+        <div class="nav-item" onclick="navigate('reports')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>Reports</div>
+        <div class="nav-item" onclick="navigate('medical')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-1.99.9-1.99 2L3 19c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>Medical Records</div>
+        <div class="nav-item" onclick="navigate('rehab')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3L1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/></svg>Rehabilitation<span class="nav-badge" id="nav-rehab-count">0</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Logistics</div>
+        <div class="nav-item" onclick="navigate('inventory')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>Inventory<span class="nav-badge warn" id="nav-stock-alert" style="display:none">!</span></div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">System</div>
+        <div class="nav-item" onclick="navigate('staff')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Staff / Users</div>
+        <div class="nav-item" onclick="navigate('permissions')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 100 14 7 7 0 000-14zm0 2a5 5 0 110 10 5 5 0 010-10zM4 20c0-2.67 5.33-4 8-4s8 1.33 8 4v2H4v-2z"/></svg>Permissions</div>
+        <div class="nav-item" onclick="navigate('auditlog')"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>Audit Log</div>
+        
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="user-avatar" id="user-avatar-sidebar">AD</div>
+        <div><div class="user-name" id="user-name-sidebar">Admin</div><div class="user-role" id="user-role-sidebar">Administrator</div></div>
+        <button class="btn-logout" onclick="doLogout()" title="Logout"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="main">
+    <div class="topbar">
+        <div><div class="topbar-title" id="page-title">Dashboard</div><div class="topbar-sub" id="page-sub">Overview of facility status</div></div>
+        <div style="margin-left:12px">
+          <select id="view-toggle" class="form-select" onchange="onViewToggleChange(event)"></select>
+        </div>
+        <div class="topbar-actions" id="topbar-actions"></div>
+      </div>
+    <div class="content">
+
+      <?php include __DIR__ . '/modules/dashboard.php'; ?>
+<?php include __DIR__ . '/modules/permissions.php'; ?>
+<?php include __DIR__ . '/modules/prisoners.php'; ?>
+<?php include __DIR__ . '/modules/visitations.php'; ?>
+<?php include __DIR__ . '/modules/incidents.php'; ?>
+<?php include __DIR__ . '/modules/movements.php'; ?>
+<?php include __DIR__ . '/modules/cells.php'; ?>
+<?php include __DIR__ . '/modules/court.php'; ?>
+<?php include __DIR__ . '/modules/reports.php'; ?>
+<?php include __DIR__ . '/modules/medical.php'; ?>
+<?php include __DIR__ . '/modules/shifts.php'; ?>
+<?php include __DIR__ . '/modules/rehab.php'; ?>
+<?php include __DIR__ . '/modules/inventory.php'; ?>
+<?php include __DIR__ . '/modules/staff.php'; ?>
+<?php include __DIR__ . '/modules/auditlog.php'; ?>
+<!-- CONFIRM MODAL -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal" style="width:400px">
+    <div class="modal-title">Confirm Delete</div>
+    <div style="margin:16px 0;color:var(--text2);font-size:13px" id="confirm-msg"></div>
+    <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('confirm')">Cancel</button><button class="btn btn-danger" id="confirm-ok-btn">Delete</button></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG â€” change this path if your folder name differs
+// ============================================================
+const API_BASE = 'api/data.php';
+const AUTH_API = 'api/auth.php';
+
+// ============================================================
+// API HELPERS
+// ============================================================
+async function apiCall(url, body = null) {
+  const opts = { credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
+  if (body) { opts.method = 'POST'; opts.body = JSON.stringify(body); }
+  else opts.method = 'GET';
+  const r = await fetch(url, opts);
+  return r.json();
+}
+
+async function dbGetAll(store) {
+  const res = await apiCall(`${API_BASE}?action=get&store=${store}`);
+  return res.success ? res.data : [];
+}
+
+async function dbPut(store, record) {
+  const res = await apiCall(API_BASE, { action: 'save', store, record });
+  if (!res.success) throw new Error(res.msg);
+  return res.data?.id;
+}
+
+async function dbDelete(store, id) {
+  const res = await apiCall(API_BASE, { action: 'delete', store, id });
+  if (!res.success) throw new Error(res.msg);
+}
+
+async function getStats() {
+  const res = await apiCall(`${API_BASE}?action=stats`);
+  return res.success ? res.data : {};
+}
+
+// ============================================================
+// STATE
+// ============================================================
+let currentUser = null;
+let editingId = {};
+let _cachedData = {};   // in-memory cache per navigation
+
+const pages = {
+  'dashboard':  { title: 'Dashboard',        sub: 'Overview of facility status' },
+  'prisoners':  { title: 'Prisoner Registry', sub: 'Manage all prisoner records' },
+  'visitations':{ title: 'Visitations',       sub: 'Schedule and track visitor access' },
+  'incidents':  { title: 'Incident Reports',  sub: 'File and manage incident records' },
+  'movements':  { title: 'Movement Log',      sub: 'Track prisoner check-ins and check-outs' },
+  'cells':      { title: 'Cell Management',   sub: 'Monitor cell block occupancy' },
+  'court':      { title: 'Court Cases',       sub: 'Manage court case records and hearings' },
+  'reports':    { title: 'Reports',           sub: 'Generate and view official reports' },
+  'medical':    { title: 'Medical Records',   sub: 'Track prisoner health records' },
+  'staff':      { title: 'Staff & Users',     sub: 'Manage system users and access' },
+  'auditlog':   { title: 'Audit Log',         sub: 'System activity and security trail' },
+  'permissions':{ title: 'Permissions',       sub: 'Manage role-based access control' },
+  'shifts':     { title: 'Shift Management',  sub: 'Schedule and track staff duty shifts' },
+  'rehab':      { title: 'Rehabilitation',    sub: 'Manage rehabilitation programs and enrollments' },
+  'inventory':  { title: 'Inventory',         sub: 'Track facility stock and equipment' },
+};
+const topbarBtns = {
+  'prisoners':   `<button class="btn btn-primary btn-sm" onclick="openModal('prisoner')">ï¼‹ Add Prisoner</button>`,
+  'visitations': `<button class="btn btn-primary btn-sm" onclick="openModal('visit')">ï¼‹ Schedule Visit</button>`,
+  'incidents':   `<button class="btn btn-primary btn-sm" onclick="openModal('incident')">ï¼‹ File Incident</button>`,
+  'movements':   `<button class="btn btn-primary btn-sm" onclick="openModal('movement')">ï¼‹ Log Movement</button>`,
+  'cells':       `<button class="btn btn-primary btn-sm" onclick="openModal('cell')">ï¼‹ Add Cell</button>`,
+  'court':       `<button class="btn btn-primary btn-sm" onclick="openModal('court')">ï¼‹ Add Case</button>`,
+  'reports':     `<button class="btn btn-primary btn-sm" onclick="openModal('report')">ï¼‹ New Report</button>`,
+  'medical':     `<button class="btn btn-primary btn-sm" onclick="openModal('medical')">ï¼‹ Add Record</button>`,
+  'staff':       `<button class="btn btn-primary btn-sm" onclick="openModal('staff')">&#x002B; Add Staff</button>`,
+  'shifts':      `<button class="btn btn-primary btn-sm" onclick="openModal('shift')">&#x002B; Schedule Shift</button>`,
+  'rehab':       `<button class="btn btn-primary btn-sm" onclick="openModal('rehab_prog')">&#x002B; Add Program</button><button class="btn btn-secondary btn-sm" onclick="openModal('enrollment')">&#x002B; Enroll Prisoner</button>`,
+  'inventory':   `<button class="btn btn-primary btn-sm" onclick="openModal('inv_item')">&#x002B; Add Item</button><button class="btn btn-secondary btn-sm" onclick="openModal('inv_txn')">&#x002B; Transaction</button>`,
+};
+
+function getFilteredData(data, dateField) {
+  const fromDate = document.getElementById(dateField + '-from-date')?.value;
+  const toDate = document.getElementById(dateField + '-to-date')?.value;
+  if (!fromDate && !toDate) return data;
+  return data.filter(item => {
+    let itemDate = null;
+    if (item.visitDate) itemDate = item.visitDate;
+    else if (item.admdate) itemDate = item.admdate;
+    else if (item.incidentDate) itemDate = item.incidentDate;
+    else if (item.medDate) itemDate = item.medDate;
+    else if (item.moveDate) itemDate = item.moveDate;
+    else if (item.shiftDate) itemDate = item.shiftDate;
+    if (!itemDate) return true;
+    const date = new Date(itemDate);
+    const from = fromDate ? new Date(fromDate) : new Date('1900-01-01');
+    const to = toDate ? new Date(toDate) : new Date('2099-12-31');
+    return date >= from && date <= to;
+  });
+}
+
+function exportToCSV(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  const csv = [headers.join(','), ...data.map(row => headers.map(h => `"${(row[h] || '').toString().replace(/"/g, '""') }"`).join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click(); window.URL.revokeObjectURL(url);
+  showNotif('CSV exported successfully', 'success');
+}
+
+function exportToExcel(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  let html = '<table border="1"><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  data.forEach(row => { html += '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>'; });
+  html += '</table>';
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); window.URL.revokeObjectURL(url);
+  showNotif('Excel exported successfully', 'success');
+}
+
+function exportToPDF(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  let html = `<html><head><style>body{font-family:Arial;margin:10px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ddd;padding:8px;text-align:left;}th{background-color:#f2f2f2;font-weight:bold;}</style></head><body><table><tr>` + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  data.forEach(row => { html += '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>'; });
+  html += '</table></body></html>';
+  const newWindow = window.open(); newWindow.document.write(html); newWindow.document.close(); setTimeout(() => newWindow.print(), 250);
+  showNotif('PDF ready to print', 'success');
+}
+
+function exportToWord(data, filename) {
+  if (!data || data.length === 0) { showNotif('No data to export', 'error'); return; }
+  const headers = Object.keys(data[0]);
+  let html = '<table border="1"><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+  data.forEach(row => { html += '<tr>' + headers.map(h => `<td>${row[h] || ''}</td>`).join('') + '</tr>'; });
+  html += '</table>';
+  const blob = new Blob([`<html><body>${html}</body></html>`], { type: 'application/msword' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); window.URL.revokeObjectURL(url);
+  showNotif('Word document exported', 'success');
+}
+
+async function exportData(store, format) {
+  const data = await dbGetAll(store);
+  const filtered = getFilteredData(data, store);
+  const datePart = new Date().toISOString().split('T')[0];
+  if (format === 'csv') return exportToCSV(filtered, `${store}_${datePart}.csv`);
+  if (format === 'excel') return exportToExcel(filtered, `${store}_${datePart}.xls`);
+  if (format === 'pdf') return exportToPDF(filtered, `${store}_${datePart}.pdf`);
+  if (format === 'word') return exportToWord(filtered, `${store}_${datePart}.doc`);
+  showNotif('Unknown export format', 'error');
+}
+
+function getRoleCategory() {
+  const role = (currentUser?.role || '').toLowerCase();
+  if (role.includes('system') || role.includes('administrator') || role === 'admin') {
+    return 'admin';
+  }
+  if (['warden', 'officer', 'medical', 'clerk', 'user', 'staff'].includes(role)) {
+    return 'user';
+  }
+  return 'other';
+}
+
+function getAllowedPages() {
+  const role = getRoleCategory();
+  const permissions = {
+    admin: ['dashboard','prisoners','visitations','incidents','movements','cells','shifts','court','reports','medical','rehab','inventory','staff','permissions','auditlog'],
+    user: ['dashboard','prisoners','visitations','incidents','movements','cells','shifts','court','reports','medical','rehab','inventory'],
+    other: ['dashboard','prisoners','visitations','reports'],
+  };
+  return permissions[role] || [];
+}
+
+function getNavPage(el) {
+  const onclick = el.getAttribute('onclick') || '';
+  if (onclick.includes("navigate('")) {
+    const match = onclick.match(/navigate\('([^']+)'/);
+    return match ? match[1] : '';
+  }
+  
+  return '';
+}
+
+function applyRoleMenuFiltering() {
+  const allowedPages = getAllowedPages();
+  document.querySelectorAll('.nav-item').forEach(el => {
+    const page = getNavPage(el);
+    if (!page) return;
+    el.style.display = allowedPages.includes(page) ? 'flex' : 'none';
+  });
+}
+
+function isPageAllowed(page) {
+  return getAllowedPages().includes(page);
+}
+
+function isAdmin() {
+  return getRoleCategory() === 'admin';
+}
+
+// Render a compact view selector in the topbar listing allowed pages
+function renderViewToggle() {
+  const sel = document.getElementById('view-toggle');
+  if (!sel) return;
+  const pages = getAllowedPages();
+  sel.innerHTML = pages.map(p => `<option value="${p}">${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('');
+  sel.value = document.getElementById('page-title').textContent.toLowerCase() || 'dashboard';
+}
+
+function onViewToggleChange(e) {
+  const val = e.target.value;
+  if (val) navigate(val);
+}
+
+function toggleACLEditor() {
+  const section = document.getElementById('acl-editor-section');
+  if (section) section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+function updatePermissionUI(role) {
+  // UI feedback when user toggles checkboxes
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value;
+  if (!username || !password) return showAlert('Please enter credentials');
+
+  try {
+    const res = await apiCall(AUTH_API, { action: 'login', username, password });
+    if (!res) {
+      console.error('Login API returned null/undefined response');
+      return showAlert('Server error: No response from authentication service');
+    }
+    if (res.success) {
+      currentUser = res.data;
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      const initials = (currentUser.name || 'AD').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+      document.getElementById('user-avatar-sidebar').textContent = initials;
+      document.getElementById('user-name-sidebar').textContent = currentUser.name;
+      document.getElementById('user-role-sidebar').textContent = currentUser.role;
+      applyRoleMenuFiltering();
+      renderViewToggle();
+      navigate('dashboard');
+      // Clear any autofilled or restored credentials to prevent automatic login values
+      try {
+        const clearLoginFields = () => {
+          const userEl = document.getElementById('login-user');
+          const passEl = document.getElementById('login-pass');
+          if (userEl) { userEl.value = ''; }
+          if (passEl) { passEl.value = ''; }
+        };
+        // Clear immediately and again shortly after to counter browsers that restore values
+        clearLoginFields();
+        window.addEventListener('pageshow', () => setTimeout(clearLoginFields, 50));
+        document.addEventListener('DOMContentLoaded', () => setTimeout(clearLoginFields, 50));
+      } catch (e) {}
+      showNotif(`Welcome back, ${currentUser.name.split(' ')[0]}!`, 'success');
+    } else {
+      console.error('Login failed:', res.msg);
+      showAlert(res.msg || 'Invalid credentials');
+    }
+  } catch (err) {
+    console.error('Login error:', err);
+    showAlert('Network error: ' + (err.message || 'Unable to connect to server'));
+  }
+}
+
+function showAlert(msg) {
+  const al = document.getElementById('auth-alert');
+  al.textContent = msg; al.style.display = 'block';
+  setTimeout(() => al.style.display = 'none', 4000);
+}
+
+async function doLogout() {
+  await apiCall(AUTH_API, { action: 'logout' });
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  showNotif('Logged out successfully', 'info');
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function togglePasswordVisibility() {
+  const passInput = document.getElementById('login-pass');
+  const toggleBtn = event.target.closest('.password-toggle-btn');
+  if (passInput.type === 'password') {
+    passInput.type = 'text';
+    toggleBtn.classList.add('active');
+  } else {
+    passInput.type = 'password';
+    toggleBtn.classList.remove('active');
+  }
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function navigate(page) {
+  if (!isPageAllowed(page)) {
+    showNotif('Access denied for your role', 'error');
+    page = 'dashboard';
+  }
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const ni = document.querySelector(`.nav-item[onclick="navigate('${page}')"]`);
+  if (ni) ni.classList.add('active');
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  const pg = document.getElementById(`page-${page}`);
+  if (pg) pg.classList.add('active');
+  const info = pages[page] || { title: page, sub: '' };
+  document.getElementById('page-title').textContent = info.title;
+  document.getElementById('page-sub').textContent = info.sub;
+  document.getElementById('topbar-actions').innerHTML = topbarBtns[page] || '';
+  const renders = { dashboard: renderDashboard, prisoners: renderPrisoners, visitations: renderVisitations, incidents: renderIncidents, movements: renderMovements, cells: renderCells, shifts: renderShifts, court: renderCourt, reports: renderReports, medical: renderMedical, rehab: renderRehab, inventory: renderInventory, staff: renderStaff, auditlog: renderAudit };
+  renders['permissions'] = renderPermissions;
+  if (renders[page]) renders[page]();
+  try { const vt = document.getElementById('view-toggle'); if (vt) vt.value = page; } catch (e) {}
+}
+
+function switchTab(page, tab) {
+  document.querySelectorAll(`#page-${page} .tab`).forEach(t => t.classList.remove('active'));
+  document.querySelectorAll(`#page-${page} .tab-content`).forEach(t => t.classList.remove('active'));
+  document.querySelector(`#page-${page} .tab[onclick="switchTab('${page}','${tab}')"]`).classList.add('active');
+  document.getElementById(`${page}-tab-${tab}`).classList.add('active');
+  if (page === 'reports' && tab === 'statistics') renderReportStats();
+  if (page === 'shifts' && tab === 'swaps') renderSwaps();
+  if (page === 'inventory' && tab === 'transactions') renderTransactions();
+  if (page === 'inventory' && tab === 'lowstock') renderInventoryLowStock();
+  if (page === 'rehab' && tab === 'enrollments') renderEnrollments();
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+async function openModal(type, id = null) {
+  editingId[type] = id;
+  const prisoners = await dbGetAll('prisoners');
+
+  if (type === 'prisoner') {
+    document.getElementById('prisoner-modal-title').textContent = id ? 'Edit Prisoner Record' : 'Register New Prisoner';
+    const cells = await dbGetAll('cells');
+    document.getElementById('p-cell').innerHTML = '<option value="">-- Unassigned --</option>' + cells.map(c => `<option value="${c.cellNumber}">${c.cellNumber} (${c.block}) - ${c.status}</option>`).join('');
+    if (id) {
+      const p = prisoners.find(p => p.id == id);
+      if (p) {
+        ['firstname','lastname','dob','gender','natid','nationality','address','emname','emphone','admdate','sentence','release','offense','security','status','notes'].forEach(f => { const el = document.getElementById('p-'+f); if (el) el.value = p[f] || ''; });
+        document.getElementById('p-casenumber').value = p.caseNumber || '';
+        document.getElementById('p-middlename').value = p.middlename || '';
+        document.getElementById('p-cell').value = p.cell || '';
+        const preview = document.getElementById('p-photo-preview');
+        const photoInput = document.getElementById('p-photo');
+        if (preview) {
+          if (p.photo) { preview.src = p.photo; preview.style.display = 'block'; } else { preview.src = ''; preview.style.display = 'none'; }
+        }
+        if (photoInput) photoInput.value = '';
+      }
+    } else {
+      ['firstname','middlename','lastname','dob','natid','nationality','address','emname','emphone','sentence','release','offense','notes','casenumber'].forEach(f => { const el = document.getElementById('p-'+f); if (el) el.value = f==='nationality'?'Kenyan':''; });
+      document.getElementById('p-admdate').value = new Date().toISOString().split('T')[0];
+      const preview = document.getElementById('p-photo-preview');
+      const photoInput = document.getElementById('p-photo');
+      if (preview) { preview.src = ''; preview.style.display = 'none'; }
+      if (photoInput) photoInput.value = '';
+    }
+  }
+
+  if (type === 'visit') {
+    document.getElementById('visit-modal-title').textContent = id ? 'Edit Visit Record' : 'Schedule Visitation';
+    document.getElementById('v-prisoner').innerHTML = prisoners.filter(p=>p.status==='Active').map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) document.getElementById('v-date').value = new Date().toISOString().slice(0,16);
+    if (id) {
+      const vs = await dbGetAll('visitations');
+      const v = vs.find(v => v.id == id);
+      if (v) { document.getElementById('v-prisoner').value = v.prisoner; ['visitorname','relationship','visitorid','phone','duration','type','status','notes'].forEach(f => { const el = document.getElementById('v-'+f); if (el) el.value = v[f]||''; }); document.getElementById('v-date').value = v.visitDate ? v.visitDate.slice(0,16) : ''; }
+    }
+  }
+
+  if (type === 'incident') {
+    document.getElementById('incident-modal-title').textContent = id ? 'Edit Incident' : 'File Incident Report';
+    document.getElementById('i-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('i-date').value = new Date().toISOString().slice(0,16); document.getElementById('i-officer').value = currentUser?.name || ''; ['others','location','description','action'].forEach(f => { const el = document.getElementById('i-'+f); if(el) el.value=''; }); }
+    if (id) { const incs = await dbGetAll('incidents'); const inc = incs.find(i=>i.id==id); if(inc){ document.getElementById('i-prisoner').value=inc.prisoner; ['type','severity','others','location','description','action','officer','status'].forEach(f=>{const el=document.getElementById('i-'+f);if(el)el.value=inc[f]||'';}); document.getElementById('i-date').value=(inc.incidentDate||'').slice(0,16); } }
+  }
+
+  if (type === 'cell') {
+    document.getElementById('cell-modal-title').textContent = id ? 'Edit Cell' : 'Add Cell';
+    if (id) {
+      const cells = await dbGetAll('cells');
+      const cell = cells.find(c => c.id == id);
+      if (cell) {
+        document.getElementById('c-cellnumber').value = cell.cellNumber || '';
+        document.getElementById('c-block').value = cell.block || '';
+        document.getElementById('c-capacity').value = cell.capacity || 2;
+        document.getElementById('c-status').value = cell.status || 'Available';
+      }
+    } else {
+      document.getElementById('c-cellnumber').value = '';
+      document.getElementById('c-block').value = '';
+      document.getElementById('c-capacity').value = 2;
+      document.getElementById('c-status').value = 'Available';
+    }
+  }
+
+  if (type === 'movement') {
+    document.getElementById('movement-modal-title').textContent = 'Log Movement';
+    document.getElementById('m-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    document.getElementById('m-date').value = new Date().toISOString().slice(0,16);
+    document.getElementById('m-officer').value = currentUser?.name || '';
+    ['location','reason','notes'].forEach(f => { const el = document.getElementById('m-'+f); if(el) el.value=''; });
+  }
+
+  if (type === 'court') {
+    document.getElementById('court-modal-title').textContent = id ? 'Edit Court Case' : 'Add Court Case';
+    document.getElementById('c-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('c-filingdate').value = new Date().toISOString().split('T')[0]; ['casenumber','court','charges','judge','prosecutor','defense','hearingdate','sentence','notes'].forEach(f => { const el = document.getElementById('c-'+f); if(el) el.value=''; }); document.getElementById('c-fine').value='0'; }
+    if (id) { const cases = await dbGetAll('court'); const c = cases.find(c=>c.id==id); if(c){ document.getElementById('c-prisoner').value=c.prisoner; ['casenumber','court','charges','judge','prosecutor','defense','filingdate','hearingdate','verdict','sentence','status','fine','notes'].forEach(f=>{const el=document.getElementById('c-'+f);if(el)el.value=c[f]||'';}); } }
+  }
+
+  if (type === 'report') {
+    document.getElementById('r-prisoner').innerHTML = '<option value="">-- General --</option>' + prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    document.getElementById('r-author').value = currentUser?.name || '';
+    ['title','body'].forEach(f => { const el = document.getElementById('r-'+f); if(el) el.value=''; });
+  }
+
+  if (type === 'medical') {
+    document.getElementById('med-prisoner').innerHTML = prisoners.map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('med-date').value = new Date().toISOString().split('T')[0]; ['condition','treatment','doctor','notes'].forEach(f => { const el = document.getElementById('med-'+f); if(el) el.value=''; }); }
+    if (id) { const recs = await dbGetAll('medical'); const r = recs.find(r=>r.id==id); if(r){ document.getElementById('med-prisoner').value=r.prisoner; ['condition','treatment','doctor','status','notes'].forEach(f=>{const el=document.getElementById('med-'+f);if(el)el.value=r[f]||'';}); document.getElementById('med-date').value=r.medDate||''; } }
+  }
+
+  if (type === 'staff') {
+    document.getElementById('staff-modal-title').textContent = id ? 'Edit Staff Member' : 'Add Staff Member';
+    if (!id) { ['firstname','lastname','dept','badge','username','password'].forEach(f => { const el = document.getElementById('st-'+f); if(el) el.value=''; }); }
+    if (id) { const st = await dbGetAll('staff'); const s = st.find(s=>s.id==id); if(s){ ['firstname','lastname','role','dept','badge','username','status'].forEach(f=>{const el=document.getElementById('st-'+f);if(el)el.value=s[f]||'';}); document.getElementById('st-password').value=''; } }
+  }
+
+// â”€â”€ SHIFT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (type === 'shift') {
+    document.getElementById('shift-modal-title').textContent = id ? 'Edit Shift' : 'Schedule Shift';
+    const staff = await dbGetAll('staff');
+    document.getElementById('sh-staff').innerHTML = staff.filter(s=>s.status==='Active').map(s=>`<option value="${s.staffId}">${s.staffId} - ${s.firstname} ${s.lastname} (${s.role})</option>`).join('');
+    if (!id) { document.getElementById('sh-date').value = new Date().toISOString().split('T')[0]; document.getElementById('sh-start').value='06:00'; document.getElementById('sh-end').value='14:00'; ['sh-location','sh-supervisor','sh-notes'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); }
+    if (id) { const shifts=await dbGetAll('shifts'); const s=shifts.find(s=>s.id==id); if(s){ document.getElementById('sh-staff').value=s.staffId; document.getElementById('sh-type').value=s.shiftType||'Morning'; document.getElementById('sh-date').value=s.shiftDate||''; document.getElementById('sh-start').value=s.startTime||''; document.getElementById('sh-end').value=s.endTime||''; document.getElementById('sh-location').value=s.location||''; document.getElementById('sh-supervisor').value=s.supervisor||''; document.getElementById('sh-status').value=s.status||'Scheduled'; document.getElementById('sh-notes').value=s.notes||''; } }
+  }
+
+  // â”€â”€ SWAP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (type === 'swap') { ['sw-shift','sw-by','sw-with','sw-reason','sw-approved'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); }
+
+  // â”€â”€ INVENTORY ITEM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (type === 'inv_item') {
+    document.getElementById('inv-item-modal-title').textContent = id ? 'Edit Item' : 'Add Inventory Item';
+    if (!id) { ['ii-name','ii-description','ii-supplier','ii-location'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); document.getElementById('ii-quantity').value=0; document.getElementById('ii-minqty').value=5; document.getElementById('ii-maxqty').value=100; document.getElementById('ii-unitcost').value=0; }
+    if (id) { const items=await dbGetAll('inventory'); const it=items.find(i=>i.id==id); if(it){ document.getElementById('ii-name').value=it.name||''; document.getElementById('ii-category').value=it.category||''; document.getElementById('ii-description').value=it.description||''; document.getElementById('ii-unit').value=it.unit||'pcs'; document.getElementById('ii-quantity').value=it.quantity||0; document.getElementById('ii-minqty').value=it.minQuantity||5; document.getElementById('ii-maxqty').value=it.maxQuantity||100; document.getElementById('ii-unitcost').value=it.unitCost||0; document.getElementById('ii-supplier').value=it.supplier||''; document.getElementById('ii-location').value=it.location||''; document.getElementById('ii-restocked').value=it.lastRestocked||''; } }
+  }
+
+  // â”€â”€ INVENTORY TRANSACTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (type === 'inv_txn') {
+    const items = await dbGetAll('inventory');
+    document.getElementById('txn-item').innerHTML = items.map(i=>`<option value="${i.id}">${i.itemCode} - ${i.name} (${i.quantity} ${i.unit})</option>`).join('');
+    document.getElementById('txn-auth').value = currentUser?.name || '';
+    ['txn-issuedto','txn-purpose','txn-notes'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';});
+    document.getElementById('txn-qty').value = 1;
+  }
+
+  // â”€â”€ REHAB PROGRAM â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (type === 'rehab_prog') {
+    document.getElementById('rehab-prog-modal-title').textContent = id ? 'Edit Program' : 'Add Rehabilitation Program';
+    if (!id) { ['rp-name','rp-description','rp-facilitator','rp-schedule','rp-venue','rp-start','rp-end'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); document.getElementById('rp-capacity').value=20; }
+    if (id) { const progs=await dbGetAll('rehab_programs'); const p=progs.find(p=>p.id==id); if(p){ document.getElementById('rp-name').value=p.name||''; document.getElementById('rp-type').value=p.type||''; document.getElementById('rp-description').value=p.description||''; document.getElementById('rp-facilitator').value=p.facilitator||''; document.getElementById('rp-schedule').value=p.schedule||''; document.getElementById('rp-venue').value=p.venue||''; document.getElementById('rp-capacity').value=p.capacity||20; document.getElementById('rp-start').value=p.startDate||''; document.getElementById('rp-end').value=p.endDate||''; document.getElementById('rp-status').value=p.status||'Active'; } }
+  }
+
+  // â”€â”€ ENROLLMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  if (type === 'enrollment') {
+    document.getElementById('enroll-modal-title').textContent = id ? 'Edit Enrollment' : 'Enroll Prisoner';
+    const progs = await dbGetAll('rehab_programs');
+    document.getElementById('en-program').innerHTML = progs.filter(p=>p.status==='Active').map(p=>`<option value="${p.id}">${p.programId} - ${p.name}</option>`).join('');
+    document.getElementById('en-prisoner').innerHTML = prisoners.filter(p=>p.status==='Active').map(p=>`<option value="${p.prisonerId}">${p.prisonerId} - ${p.firstname} ${p.lastname}</option>`).join('');
+    if (!id) { document.getElementById('en-date').value=new Date().toISOString().split('T')[0]; document.getElementById('en-progress').value=0; ['en-completion','en-grade','en-notes'].forEach(f=>{const el=document.getElementById(f);if(el)el.value='';}); }
+    if (id) { const enrs=await dbGetAll('rehab_enrollments'); const e=enrs.find(e=>e.id==id); if(e){ document.getElementById('en-program').value=e.programId; document.getElementById('en-prisoner').value=e.prisoner; document.getElementById('en-date').value=e.enrollDate||''; document.getElementById('en-completion').value=e.completionDate||''; document.getElementById('en-progress').value=e.progress||0; document.getElementById('en-grade').value=e.grade||''; document.getElementById('en-status').value=e.status||'Active'; document.getElementById('en-notes').value=e.notes||''; } }
+  }
+
+  document.getElementById(`modal-${type}`).classList.add('open');
+}
+
+function closeModal(type) {
+  document.getElementById(`modal-${type}`).classList.remove('open');
+  editingId[type] = null;
+}
+
+// ============================================================
+// SAVE FUNCTIONS
+// ============================================================
+function prisonerFullName(pid, prisoners) {
+  const p = prisoners.find(p => p.prisonerId === pid);
+  return p ? `${p.firstname} ${p.lastname}` : pid;
+}
+
+function confirmDelete(store, id, name) {
+  document.getElementById('confirm-msg').textContent = `Delete "${name}"? This action cannot be undone.`;
+  document.getElementById('confirm-ok-btn').onclick = async () => {
+    try {
+      await dbDelete(store, id);
+      closeModal('confirm'); showNotif('Record deleted', 'info');
+      const refreshMap = { prisoners: renderPrisoners, visitations: renderVisitations, incidents: renderIncidents, movements: renderMovements, cells: renderCells, shifts: renderShifts, shift_swaps: renderSwaps, court: renderCourt, reports: renderReports, medical: renderMedical, staff: renderStaff, audit: renderAudit, rehab_programs: renderRehabPrograms, rehab_enrollments: renderEnrollments, inventory_items: renderInventoryItems, inventory_transactions: renderTransactions };
+      if (refreshMap[store]) refreshMap[store]();
+      updateNavCounts();
+    } catch(e) { showNotif(e.message, 'error'); }
+  };
+  document.getElementById('modal-confirm').classList.add('open');
+}
+
+// ============================================================
+// RENDER HELPERS
+// ============================================================
+function severityBadge(s) { const m={Low:'badge-green',Medium:'badge-amber',High:'badge-red',Critical:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'â€”'}</span>`; }
+function statusBadge(s) { const m={Active:'badge-green',Released:'badge-blue',Transferred:'badge-amber',Deceased:'badge-gray',Scheduled:'badge-blue',Completed:'badge-green',Denied:'badge-red',Cancelled:'badge-gray',Open:'badge-amber','Under Review':'badge-blue',Resolved:'badge-green',Closed:'badge-gray',Ongoing:'badge-amber',Referred:'badge-purple',Critical:'badge-red',Available:'badge-green',Maintenance:'badge-amber',Full:'badge-red','Low Stock':'badge-amber','Out of Stock':'badge-red',Upcoming:'badge-blue',Suspended:'badge-amber',Absent:'badge-red',Swapped:'badge-purple',Approved:'badge-green',Pending:'badge-amber',Rejected:'badge-red',Dropped:'badge-red'}; return `<span class="badge ${m[s]||'badge-gray'}">${s||'â€”'}</span>`; }
+function fmtDate(d) { if(!d) return 'â€”'; try { return new Date(d).toLocaleDateString('en-KE',{day:'2-digit',month:'short',year:'numeric'}); } catch{return d;} }
+function fmtDateTime(d) { if(!d) return 'â€”'; try { return new Date(d).toLocaleString('en-KE',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); } catch{return d;} }
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+async function updateNavCounts() {
+  const [prisoners, enrollments, items] = await Promise.all([dbGetAll('prisoners'), dbGetAll('rehab_enrollments'), dbGetAll('inventory')]);
+  document.getElementById('nav-prisoner-count').textContent = prisoners.filter(p=>p.status==='Active').length;
+  const rehabEl = document.getElementById('nav-rehab-count');
+  if(rehabEl) rehabEl.textContent = enrollments.filter(e=>e.status==='Active').length;
+  const stockEl = document.getElementById('nav-stock-alert');
+  const lowStock = items.filter(i=>i.status==='Low Stock'||i.status==='Out of Stock').length;
+  if(stockEl){ stockEl.style.display = lowStock>0?'':'none'; }
+}
+
+async function renderTransactions() {
+  const txns = await dbGetAll('inventory_transactions');
+  const q = (document.getElementById('txn-search')?.value || '').toLowerCase();
+  const filtered = txns.filter(t => !q || `${t.itemName} ${t.txnId} ${t.issuedTo||''}`.toLowerCase().includes(q));
+  document.getElementById('transactions-tbody').innerHTML = filtered.map(t => `<tr><td class="text-mono text-accent">${t.txnId}</td><td style="color:var(--text)">${t.itemName}</td><td><span class="badge ${txnBadge(t.type)}">${t.type}</span></td><td>${t.quantity}</td><td>${t.balanceAfter !== null ? t.balanceAfter : 'â€”'}</td><td>${t.issuedTo||'â€”'}${t.purpose?' â€” '+t.purpose:''}</td><td>${t.authorizedBy||'â€”'}</td><td>${fmtDateTime(t.txnDate||t.created_at)}</td></tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:40px">No transactions</td></tr>`;
+}
+
+function showNotif(msg, type='info') {
+  const el = document.getElementById('notif');
+  el.className = `show ${type}`;
+  document.getElementById('notif-text').textContent = msg;
+  clearTimeout(notifTimeout);
+  notifTimeout = setTimeout(() => el.className = '', 3500);
+}
+
+// ============================================================
+// INIT â€” check if session already active
+// ============================================================
+(async () => {
+  const res = await apiCall(`${AUTH_API}?action=status`);
+  if (res.success && res.data?.authenticated) {
+    currentUser = res.data;
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    const initials = (currentUser.name||'AD').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('user-avatar-sidebar').textContent = initials;
+    document.getElementById('user-name-sidebar').textContent = currentUser.name;
+    document.getElementById('user-role-sidebar').textContent = currentUser.role;
+    navigate('dashboard');
+  }
+})();
+</script>
+</body>
+</html>
+
+
