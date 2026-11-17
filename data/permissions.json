@@ -1,0 +1,171 @@
+{
+    "Admin": {
+        "*": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "prisoners": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "cells": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "visitations": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "incidents": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "movements": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "court": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "reports": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "medical": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "shifts": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "shift_swaps": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "inventory_items": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "inventory_transactions": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "rehab_programs": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "rehab_enrollments": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "release_requests": {
+            "get": true,
+            "save": true,
+            "delete": true
+        },
+        "transfer_requests": {
+            "get": true,
+            "save": true,
+            "delete": true
+        }
+    },
+    "User": {
+        "prisoners": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "visitations": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "cells": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "incidents": {
+            "get": false,
+            "save": false,
+            "delete": false
+        },
+        "movements": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "court": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "reports": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "medical": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "shifts": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "shift_swaps": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "inventory_items": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "inventory_transactions": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "rehab_programs": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "rehab_enrollments": {
+            "get": true,
+            "save": false,
+            "delete": false
+        },
+        "release_requests": {
+            "get": true,
+            "save": true,
+            "delete": false
+        }
+    },
+    "Other": {
+        "prisoners": {
+            "get": true
+        }
+    }
+}
